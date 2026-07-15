@@ -3,13 +3,15 @@ use serde_json::{json, Value};
 use std::{
     env,
     ffi::OsString,
-    fs,
     io::{BufRead, BufReader, Write},
     process::{Command, Stdio},
     sync::mpsc::{self, Receiver},
     thread,
     time::{Duration, Instant},
 };
+
+#[cfg(target_os = "windows")]
+use std::fs;
 
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
