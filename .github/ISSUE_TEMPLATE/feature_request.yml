@@ -1,0 +1,16 @@
+name: Feature request
+description: Suggest a focused improvement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and proposed behavior
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy boundary
+      options:
+        - label: This does not require reading tokens, conversations, browser data, or project files.
+          required: true

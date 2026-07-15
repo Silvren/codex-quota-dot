@@ -1,0 +1,25 @@
+name: Bug report
+description: Report reproducible behavior without sharing credentials or conversations
+body:
+  - type: markdown
+    attributes:
+      value: Never attach tokens, cookies, raw account responses, conversations, or project files.
+  - type: input
+    id: version
+    attributes:
+      label: App and Codex versions
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options: [Windows x64, macOS Apple Silicon, macOS Intel]
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps and observed result
+    validations:
+      required: true

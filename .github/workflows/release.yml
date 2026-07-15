@@ -1,0 +1,54 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2025
+            label: windows-x64
+          - os: macos-14
+            label: macos-arm64
+          - os: macos-15-intel
+            label: macos-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: cargo test --manifest-path src-tauri/Cargo.toml
+      - run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --no-deps -- -D warnings
+      - run: npm run tauri build
+      - name: Create Windows portable ZIP and checksum
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Compress-Archive -LiteralPath src-tauri/target/release/codex-quota-dot.exe -DestinationPath "Codex-Quota-Dot-${{ github.ref_name }}-${{ matrix.label }}.zip"
+          (Get-FileHash "Codex-Quota-Dot-${{ github.ref_name }}-${{ matrix.label }}.zip" -Algorithm SHA256).Hash.ToLower() + "  Codex-Quota-Dot-${{ github.ref_name }}-${{ matrix.label }}.zip" | Set-Content "Codex-Quota-Dot-${{ github.ref_name }}-${{ matrix.label }}.zip.sha256" -NoNewline
+      - name: Create macOS ZIP and checksum
+        if: runner.os == 'macOS'
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent "src-tauri/target/release/bundle/macos/Codex Quota Dot.app" "Codex-Quota-Dot-${{ github.ref_name }}-${{ matrix.label }}.zip"
+          shasum -a 256 "Codex-Quota-Dot-${{ github.ref_name }}-${{ matrix.label }}.zip" > "Codex-Quota-Dot-${{ github.ref_name }}-${{ matrix.label }}.zip.sha256"
+      - uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          generate_release_notes: true
+          files: |
+            Codex-Quota-Dot-*.zip
+            Codex-Quota-Dot-*.sha256
