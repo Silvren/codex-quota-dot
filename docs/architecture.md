@@ -4,7 +4,7 @@
 
 Tauri 2 was selected over Electron.
 
-Both provide transparent frameless windows, always-on-top behavior, tray menus, and packaging. Electron bundles Chromium and uses a Chromium-style multi-process model; that is robust but heavier than needed for one 280 px card. Tauri uses the operating system WebView and a small Rust backend, while its capability files constrain renderer access to explicitly granted window operations. Those characteristics better match the low-idle-cost and narrow-security-boundary goals.
+Both provide transparent frameless windows, always-on-top behavior, tray menus, and packaging. Electron bundles Chromium and uses a Chromium-style multi-process model; that is robust but heavier than needed for one 320 px card. Tauri uses the operating system WebView and a small Rust backend, while its capability files constrain renderer access to explicitly granted window operations. Those characteristics better match the low-idle-cost and narrow-security-boundary goals.
 
 References: [Tauri capabilities](https://v2.tauri.app/security/capabilities/), [Electron process model](https://www.electronjs.org/docs/latest/tutorial/process-model), [Electron transparent-window limits](https://www.electronjs.org/docs/latest/tutorial/custom-window-styles).
 

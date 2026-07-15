@@ -1,37 +1,69 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Pin } from "lucide-react";
 import { currentMonitor, getCurrentWindow, LogicalSize, PhysicalPosition } from "@tauri-apps/api/window";
+import codexMark from "./assets/codex-mark.svg";
 import "./App.css";
 import { fetchUsage } from "./providers/usageProvider";
-import type { CodexUsageSnapshot, HealthState, QuotaWindow } from "./types/usage";
+import type { CodexUsageSnapshot } from "./types/usage";
 import { inferConsumption, normalizeSnapshot } from "./utils/usage";
-import { formatReset, formatTimestamp, formatUpdated } from "./utils/time";
 
-const COLLAPSED = 52;
-const EXPANDED_WIDTH = 280;
-const EXPANDED_HEIGHT = 286;
+const COLLAPSED = 100;
+const EXPANDED = 320;
 const CACHE_KEY = "codex-quota-dot:snapshot:v1";
-const SETTINGS_KEY = "codex-quota-dot:settings:v2";
+const SETTINGS_KEY = "codex-quota-dot:settings:v3";
 const POSITION_KEY = "codex-quota-dot:position";
 
-type Theme = "system" | "light" | "dark";
-type Settings = { theme: Theme; refreshSeconds: 0 | 30 | 60 | 300 };
-const DEFAULT_SETTINGS: Settings = { theme: "system", refreshSeconds: 60 };
-const UNKNOWN_WINDOW: QuotaWindow = {
-  remainingPercent: null,
-  usedPercent: null,
-  resetsAt: null,
-  resetDurationSeconds: null,
-  health: "unknown",
-};
+type Language = "zh" | "en";
+type Settings = { language: Language; refreshSeconds: 0 | 30 | 60 | 300 };
+type VisualTier = "healthy" | "caution" | "critical" | "unknown";
+
+const DEFAULT_SETTINGS: Settings = { language: "zh", refreshSeconds: 60 };
+
+const copy = {
+  zh: {
+    fiveHour: "5 小时剩余",
+    weekly: "本周剩余",
+    until: "至",
+    resetCredit: "次重置机会",
+    resetCredits: "次重置机会",
+    view: "查看",
+    unavailable: "暂无额度数据",
+    resetUnknown: "重置时间未知",
+    resetNow: "即将重置",
+    resetIn: "后重置",
+    refresh: "刷新额度",
+    language: "Switch to English",
+    pinOn: "取消窗口置顶",
+    pinOff: "窗口置顶",
+    creditUnavailable: "当前数据源未提供重置机会到期时间。",
+  },
+  en: {
+    fiveHour: "5-hour remaining",
+    weekly: "Weekly remaining",
+    until: "until",
+    resetCredit: " reset credit",
+    resetCredits: " reset credits",
+    view: "View",
+    unavailable: "Quota unavailable",
+    resetUnknown: "reset time unavailable",
+    resetNow: "resets now",
+    resetIn: "until reset",
+    refresh: "Refresh usage",
+    language: "切换到中文",
+    pinOn: "Disable always on top",
+    pinOff: "Keep window on top",
+    creditUnavailable: "The current provider did not supply reset-credit expiration times.",
+  },
+} as const;
 
 function readSettings(): Settings {
   try {
     const stored = JSON.parse(localStorage.getItem(SETTINGS_KEY) ?? "{}") as Partial<Settings>;
-    const theme: Theme = stored.theme === "light" || stored.theme === "dark" ? stored.theme : "system";
+    const language = stored.language === "en" ? "en" : "zh";
     const refreshSeconds = [0, 30, 60, 300].includes(stored.refreshSeconds ?? -1)
       ? stored.refreshSeconds as Settings["refreshSeconds"]
       : DEFAULT_SETTINGS.refreshSeconds;
-    return { theme, refreshSeconds };
+    return { language, refreshSeconds };
   } catch {
     return DEFAULT_SETTINGS;
   }
@@ -46,103 +78,93 @@ function readCached(): CodexUsageSnapshot | null {
   }
 }
 
-function formatPlan(plan: string | null | undefined): string {
-  if (!plan) return "Codex";
-  return `Codex ${plan.charAt(0).toUpperCase()}${plan.slice(1)}`;
+function visualTier(remaining: number | null | undefined): VisualTier {
+  if (remaining === null || remaining === undefined) return "unknown";
+  if (remaining < 10) return "critical";
+  if (remaining < 50) return "caution";
+  return "healthy";
 }
 
-function healthText(health: HealthState, snapshot: CodexUsageSnapshot | null, error: string | null): string {
-  if (!snapshot?.authenticated) return "Login not detected";
-  if (error || snapshot.isCached) return "Last known usage";
-  switch (health) {
-    case "healthy": return "Usage healthy";
-    case "warning": return "Usage running low";
-    case "critical": return "Usage critical";
-    case "exhausted": return "Usage depleted";
-    default: return "Usage unavailable";
+function planLabel(plan: string | null | undefined): string {
+  return `CODEX · ${(plan || "PLUS").toUpperCase()}`;
+}
+
+function percent(value: number | null | undefined): string {
+  return value === null || value === undefined ? "—" : `${Math.round(value)}`;
+}
+
+function resetLabel(iso: string | null | undefined, language: Language): string {
+  const t = copy[language];
+  if (!iso) return t.resetUnknown;
+  const delta = new Date(iso).getTime() - Date.now();
+  if (!Number.isFinite(delta)) return t.resetUnknown;
+  if (delta <= 0) return t.resetNow;
+  const minutes = Math.ceil(delta / 60_000);
+  const days = Math.floor(minutes / 1440);
+  const hours = Math.floor((minutes % 1440) / 60);
+  const mins = minutes % 60;
+  if (language === "zh") {
+    const duration = `${days ? `${days} 天 ` : ""}${hours ? `${hours} 小时 ` : ""}${mins} 分钟`;
+    return `${duration}${t.resetIn}`;
   }
+  const duration = `${days ? `${days}d ` : ""}${hours ? `${hours}h ` : ""}${mins}m`.trim();
+  return `resets in ${duration}`;
 }
 
-function QuotaRow({ label, value, emphasis = false }: { label: string; value: QuotaWindow; emphasis?: boolean }) {
-  const remaining = value.remainingPercent;
-  return (
-    <section className={`quota-row ${emphasis ? "primary-quota" : "secondary-quota"} quota-${value.health}`} aria-label={`${label} quota`}>
-      <div className="quota-heading">
-        <span>{label}</span>
-        <strong>{remaining === null ? "—" : `${Math.round(remaining)}%`}</strong>
-      </div>
-      <div className="quota-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={remaining ?? undefined}>
-        <span className={`quota-fill ${value.health}`} style={{ width: `${remaining ?? 0}%` }} />
-      </div>
-      <p title={value.resetsAt ? formatTimestamp(value.resetsAt) : undefined}>{formatReset(value.resetsAt)}</p>
-    </section>
-  );
-}
-
-function GearIcon() {
-  return (
-    <svg viewBox="0 0 20 20" aria-hidden="true">
-      <circle cx="10" cy="10" r="2.4" />
-      <path d="M10 2.8v1.4M10 15.8v1.4M2.8 10h1.4M15.8 10h1.4M4.9 4.9l1 1M14.1 14.1l1 1M15.1 4.9l-1 1M5.9 14.1l-1 1" />
-      <circle cx="10" cy="10" r="5.7" />
-    </svg>
-  );
-}
-
-function RefreshIcon() {
-  return (
-    <svg viewBox="0 0 20 20" aria-hidden="true">
-      <path d="M15.4 7.1A6 6 0 1 0 16 11" />
-      <path d="M12.5 4.7l3.2 2.1-2.2 3" />
-    </svg>
-  );
+function weeklyDate(iso: string | null | undefined, language: Language): string {
+  if (!iso) return "—";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-US", {
+    month: "numeric",
+    day: "numeric",
+  }).format(date);
 }
 
 export default function App() {
   const [expanded, setExpanded] = useState(false);
   const [closing, setClosing] = useState(false);
-  const [pinned, setPinned] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [pinnedOpen, setPinnedOpen] = useState(false);
+  const [alwaysOnTop, setAlwaysOnTop] = useState(true);
+  const [creditOpen, setCreditOpen] = useState(false);
   const [settings, setSettings] = useState<Settings>(() => readSettings());
   const [refreshing, setRefreshing] = useState(false);
   const [snapshot, setSnapshot] = useState<CodexUsageSnapshot | null>(() => readCached());
-  const [error, setError] = useState<string | null>(null);
   const previous = useRef<CodexUsageSnapshot | null>(null);
   const refreshingRef = useRef(false);
   const edgeAnchor = useRef({ right: false, bottom: false });
   const openTimer = useRef<number | null>(null);
   const closeTimer = useRef<number | null>(null);
 
-  const health: HealthState = snapshot
-    ? [snapshot.fiveHour.health, snapshot.weekly.health].sort(
-        (a, b) => ["exhausted", "critical", "warning", "unknown", "healthy"].indexOf(a) - ["exhausted", "critical", "warning", "unknown", "healthy"].indexOf(b),
-      )[0]
-    : "unknown";
+  const remaining = snapshot?.fiveHour.remainingPercent;
+  const tier = visualTier(remaining);
+  const language = settings.language;
+  const t = copy[language];
 
   const resizeNative = useCallback(async (nextExpanded: boolean) => {
     try {
       const win = getCurrentWindow();
       const [monitor, position, currentSize] = await Promise.all([currentMonitor(), win.outerPosition(), win.outerSize()]);
+      const nextSize = nextExpanded ? EXPANDED : COLLAPSED;
       if (!monitor) {
-        await win.setSize(new LogicalSize(nextExpanded ? EXPANDED_WIDTH : COLLAPSED, nextExpanded ? EXPANDED_HEIGHT : COLLAPSED));
+        await win.setSize(new LogicalSize(nextSize, nextSize));
         return;
       }
       const currentRight = monitor.position.x + monitor.size.width - currentSize.width;
       const currentBottom = monitor.position.y + monitor.size.height - currentSize.height;
-      const threshold = Math.round(14 * monitor.scaleFactor);
+      const threshold = Math.round(18 * monitor.scaleFactor);
       if (nextExpanded) {
         edgeAnchor.current = {
           right: Math.abs(position.x - currentRight) <= threshold,
           bottom: Math.abs(position.y - currentBottom) <= threshold,
         };
       }
-      const width = Math.round((nextExpanded ? EXPANDED_WIDTH : COLLAPSED) * monitor.scaleFactor);
-      const height = Math.round((nextExpanded ? EXPANDED_HEIGHT : COLLAPSED) * monitor.scaleFactor);
-      const maxX = monitor.position.x + monitor.size.width - width;
-      const maxY = monitor.position.y + monitor.size.height - height;
+      const pixels = Math.round(nextSize * monitor.scaleFactor);
+      const maxX = monitor.position.x + monitor.size.width - pixels;
+      const maxY = monitor.position.y + monitor.size.height - pixels;
       const x = edgeAnchor.current.right ? maxX : Math.max(monitor.position.x, Math.min(position.x, maxX));
       const y = edgeAnchor.current.bottom ? maxY : Math.max(monitor.position.y, Math.min(position.y, maxY));
-      await win.setSize(new LogicalSize(nextExpanded ? EXPANDED_WIDTH : COLLAPSED, nextExpanded ? EXPANDED_HEIGHT : COLLAPSED));
+      await win.setSize(new LogicalSize(nextSize, nextSize));
       await win.setPosition(new PhysicalPosition(x, y));
     } catch {
       // Browser preview has no native window.
@@ -159,30 +181,28 @@ export default function App() {
   }, [expanded, resizeNative]);
 
   const closePanel = useCallback((force = false) => {
-    if (pinned && !force) return;
+    if (pinnedOpen && !force) return;
     if (openTimer.current !== null) window.clearTimeout(openTimer.current);
     setClosing(true);
     closeTimer.current = window.setTimeout(() => {
       setExpanded(false);
       setClosing(false);
-      setSettingsOpen(false);
+      setCreditOpen(false);
       void resizeNative(false);
-    }, 140);
-  }, [pinned, resizeNative]);
+    }, 150);
+  }, [pinnedOpen, resizeNative]);
 
   const refresh = useCallback(async () => {
     if (refreshingRef.current) return;
     refreshingRef.current = true;
     setRefreshing(true);
-    setError(null);
     try {
       const next = normalizeSnapshot(await fetchUsage());
       next.consumptionState = inferConsumption(previous.current, next);
       previous.current = next;
       setSnapshot(next);
       localStorage.setItem(CACHE_KEY, JSON.stringify(next));
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Unable to read Codex usage");
+    } catch {
       setSnapshot((current) => current ? { ...current, isCached: true } : current);
     } finally {
       refreshingRef.current = false;
@@ -191,7 +211,6 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    document.documentElement.dataset.theme = settings.theme;
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
   }, [settings]);
 
@@ -207,15 +226,15 @@ export default function App() {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
-      if (settingsOpen) setSettingsOpen(false);
+      if (creditOpen) setCreditOpen(false);
       else {
-        setPinned(false);
+        setPinnedOpen(false);
         closePanel(true);
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [closePanel, settingsOpen]);
+  }, [closePanel, creditOpen]);
 
   useEffect(() => {
     if (!("__TAURI_INTERNALS__" in window)) return;
@@ -226,7 +245,6 @@ export default function App() {
     } catch {
       // Ignore invalid position state.
     }
-
     let snapTimer: number | null = null;
     const unlisten = win.onMoved(({ payload: position }) => {
       localStorage.setItem(POSITION_KEY, JSON.stringify(position));
@@ -235,7 +253,7 @@ export default function App() {
         try {
           const [monitor, size] = await Promise.all([currentMonitor(), win.outerSize()]);
           if (!monitor) return;
-          const threshold = Math.round(12 * monitor.scaleFactor);
+          const threshold = Math.round(14 * monitor.scaleFactor);
           const left = monitor.position.x;
           const top = monitor.position.y;
           const right = left + monitor.size.width - size.width;
@@ -268,7 +286,7 @@ export default function App() {
       window.clearTimeout(openTimer.current);
       openTimer.current = null;
     }
-    if (pinned) return;
+    if (pinnedOpen) return;
     closeTimer.current = window.setTimeout(() => closePanel(), 450);
   };
 
@@ -280,114 +298,80 @@ export default function App() {
     }
   };
 
-  const resetPosition = async () => {
+  const toggleTop = async () => {
+    const next = !alwaysOnTop;
     try {
-      const monitor = await currentMonitor();
-      if (!monitor) return;
-      const margin = Math.round(16 * monitor.scaleFactor);
-      const width = Math.round(EXPANDED_WIDTH * monitor.scaleFactor);
-      await getCurrentWindow().setPosition(new PhysicalPosition(
-        monitor.position.x + monitor.size.width - width - margin,
-        monitor.position.y + margin,
-      ));
-      setSettingsOpen(false);
+      await getCurrentWindow().setAlwaysOnTop(next);
     } catch {
       // Browser preview.
     }
+    setAlwaysOnTop(next);
   };
 
   if (!expanded) {
-    const orbRemaining = snapshot?.fiveHour.remainingPercent;
-    const orbHealth = snapshot?.fiveHour.health ?? health;
     return (
-      <main className="dot-shell" onMouseEnter={enter} onMouseLeave={leave} onMouseDown={(event) => event.button === 0 && void drag()}>
+      <main className="orb-shell" onMouseEnter={enter} onMouseLeave={leave} onMouseDown={(event) => event.button === 0 && void drag()}>
         <button
-          className={`quota-orb ${orbHealth}`}
-          aria-label={`Codex quota: ${health}. Hover to expand; click to keep open.`}
-          onClick={() => { setPinned(true); openPanel(); }}
+          className={`quota-orb tier-${tier}`}
+          aria-label={`${t.fiveHour}: ${remaining ?? t.unavailable}`}
+          onClick={() => { setPinnedOpen(true); openPanel(); }}
         >
-          <span className="orb-value" aria-hidden="true">
-            <strong>{orbRemaining === null || orbRemaining === undefined ? "—" : Math.round(orbRemaining)}</strong>
-            {orbRemaining !== null && orbRemaining !== undefined && <small>%</small>}
+          <span className="aurora" aria-hidden="true" />
+          <span className="orb-metric" aria-hidden="true">
+            <strong>{percent(remaining)}</strong>
+            {remaining !== null && remaining !== undefined && <small>%</small>}
           </span>
-          <i className={`orb-state ${orbHealth}`} aria-hidden="true" />
         </button>
       </main>
     );
   }
 
+  const weekly = snapshot?.weekly.remainingPercent;
   const activity = snapshot?.consumptionState ?? "unknown";
-  const status = healthText(health, snapshot, error);
+  const credits = snapshot?.availableResets;
 
   return (
-    <main className={`panel health-${health} ${closing ? "closing" : ""}`} onMouseEnter={enter} onMouseLeave={leave} title={error ?? undefined}>
-      <header className="panel-header" onMouseDown={(event) => event.button === 0 && void drag()}>
-        <div className="account-state">
-          <strong>{formatPlan(snapshot?.plan)}</strong>
-          <span><i className={`status-dot ${health}`} aria-hidden="true" />{status}</span>
+    <main className={`quota-card tier-${tier} ${closing ? "closing" : ""}`} onMouseEnter={enter} onMouseLeave={leave}>
+      <span className="aurora" aria-hidden="true" />
+      <header className="card-header" onMouseDown={(event) => event.button === 0 && void drag()}>
+        <div>
+          <strong className="eyebrow">{planLabel(snapshot?.plan)}</strong>
+          <p className="subtitle">{t.fiveHour}</p>
         </div>
-        <button
-          className={`icon-button settings-trigger ${settingsOpen ? "active" : ""}`}
-          aria-label="Settings"
-          aria-expanded={settingsOpen}
-          onMouseDown={(event) => event.stopPropagation()}
-          onClick={() => setSettingsOpen((open) => !open)}
-        >
-          <GearIcon />
-        </button>
+        <nav className="card-actions" aria-label="Widget controls" onMouseDown={(event) => event.stopPropagation()}>
+          <span className={`activity activity-${activity}`} title={`${activity} · ${snapshot?.isCached ? "cached" : "live"}`} aria-label={activity} />
+          <button className="language-button" onClick={() => setSettings((current) => ({ ...current, language: current.language === "zh" ? "en" : "zh" }))} title={t.language}>
+            {language === "zh" ? "EN" : "中"}
+          </button>
+          <button className={`pin-button ${alwaysOnTop ? "active" : ""}`} onClick={() => void toggleTop()} title={alwaysOnTop ? t.pinOn : t.pinOff} aria-pressed={alwaysOnTop}>
+            <Pin aria-hidden="true" />
+          </button>
+        </nav>
       </header>
 
-      <div className="quota-list">
-        <QuotaRow label="5-hour remaining" value={snapshot?.fiveHour ?? UNKNOWN_WINDOW} emphasis />
-        <QuotaRow label="Weekly remaining" value={snapshot?.weekly ?? UNKNOWN_WINDOW} />
+      <section className="primary-metric" aria-label={t.fiveHour}>
+        <strong>{percent(remaining)}</strong>
+        {remaining !== null && remaining !== undefined && <small>%</small>}
+      </section>
+      <div className="progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={remaining ?? undefined}>
+        <span style={{ width: `${remaining ?? 0}%` }} />
       </div>
+      <p className="reset-time">{resetLabel(snapshot?.fiveHour.resetsAt, language)}</p>
 
-      <footer className="panel-footer">
-        <span className="updated-line">
-          <b>{activity.charAt(0).toUpperCase() + activity.slice(1)}</b>
-          <i aria-hidden="true">·</i>
-          {snapshot ? `${snapshot.isCached ? "Cached" : "Updated"} ${formatUpdated(snapshot.fetchedAt)}` : "Not updated"}
-        </span>
-        <button className={`icon-button refresh-button ${refreshing ? "refreshing" : ""}`} onClick={() => void refresh()} disabled={refreshing} aria-label="Refresh usage">
-          <RefreshIcon />
+      <footer className="card-footer">
+        <div className="weekly-metric">
+          <p>{t.weekly} · {t.until} {weeklyDate(snapshot?.weekly.resetsAt, language)}</p>
+          <strong>{percent(weekly)}{weekly !== null && weekly !== undefined && <small>%</small>}</strong>
+          <div className="credit-row">
+            <span>{credits ?? "—"}{language === "zh" ? t.resetCredits : credits === 1 ? t.resetCredit : t.resetCredits}</span>
+            <button onClick={() => setCreditOpen((open) => !open)}>{t.view}</button>
+            {creditOpen && <aside className="credit-popover">{t.creditUnavailable}</aside>}
+          </div>
+        </div>
+        <button className={`provider-mark ${refreshing ? "refreshing" : ""}`} onClick={() => void refresh()} title={t.refresh} disabled={refreshing}>
+          <img src={codexMark} alt="" />
         </button>
       </footer>
-
-      {settingsOpen && (
-        <section className="settings-popover" aria-label="Settings">
-          <div className="setting-group">
-            <span>Theme</span>
-            <div className="segmented-control" aria-label="Theme">
-              {(["system", "light", "dark"] as const).map((theme) => (
-                <button
-                  key={theme}
-                  className={settings.theme === theme ? "selected" : ""}
-                  aria-pressed={settings.theme === theme}
-                  onClick={() => setSettings((current) => ({ ...current, theme }))}
-                >
-                  {theme.charAt(0).toUpperCase() + theme.slice(1)}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="setting-group">
-            <span>Refresh</span>
-            <div className="segmented-control refresh-options" aria-label="Refresh interval">
-              {([[30, "30s"], [60, "1m"], [300, "5m"], [0, "Manual"]] as const).map(([seconds, label]) => (
-                <button
-                  key={seconds}
-                  className={settings.refreshSeconds === seconds ? "selected" : ""}
-                  aria-pressed={settings.refreshSeconds === seconds}
-                  onClick={() => setSettings((current) => ({ ...current, refreshSeconds: seconds }))}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <button onClick={() => void resetPosition()}>Reset position</button>
-        </section>
-      )}
     </main>
   );
 }

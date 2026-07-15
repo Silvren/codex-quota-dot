@@ -14,10 +14,12 @@
       {
         "label": "main",
         "title": "Codex Quota Dot",
-        "width": 52,
-        "height": 52,
-        "minWidth": 52,
-        "minHeight": 52,
+        "width": 100,
+        "height": 100,
+        "minWidth": 100,
+        "minHeight": 100,
+        "maxWidth": 320,
+        "maxHeight": 320,
         "resizable": false,
         "decorations": false,
         "transparent": true,
@@ -27,7 +29,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; img-src 'self' asset:; style-src 'self' 'unsafe-inline'; connect-src ipc: http://ipc.localhost"
+      "csp": "default-src 'self'; img-src 'self' asset: data:; style-src 'self' 'unsafe-inline'; connect-src ipc: http://ipc.localhost"
     }
   },
   "bundle": {

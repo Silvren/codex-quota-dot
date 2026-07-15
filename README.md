@@ -16,7 +16,7 @@ A lightweight, privacy-first desktop indicator for viewing Codex quota windows w
 - best-effort `consuming` / `idle` inference from successive quota changes
 - last-update and honest cached/unknown states
 
-The compact quota orb stays on top, shows the current 5-hour percentage, can be dragged and snapped to screen edges, and expands into a 280 px card on hover. Click the orb to keep the card open; press `Esc` to close it.
+The 80 px quota orb stays on top, shows the current 5-hour percentage, can be dragged and snapped to screen edges, and expands into a 320 px square quota card on hover. The card includes Chinese/English switching and an always-on-top control. Click the orb to keep the card open; press `Esc` to close it.
 
 ## Privacy design
 
@@ -65,7 +65,7 @@ npm run tauri build
 - Rust/native build verification is required on every target OS; WebView behavior differs across Windows and macOS.
 - Each refresh currently starts a short-lived app-server subprocess. A future release may reuse the supported local daemon transport after lifecycle behavior is validated.
 - Native behavior still needs a hands-on pass on each supported macOS architecture before public release.
-- Start-at-login is intentionally not included in `v0.1.0`; the settings popover stays limited to theme, refresh interval, and position reset.
+- Start-at-login and a full settings screen are intentionally not included in `v0.1.0`; the widget keeps controls limited to language, always-on-top, reset-credit details, and refresh.
 - `consuming` is inferred from a decrease between snapshots. It does not mean a Codex task is definitely running.
 - The provider depends on the installed Codex version exposing the documented app-server account methods. Structural changes fail closed as `Unknown`.
 
@@ -78,6 +78,7 @@ npm run tauri build
 - [`docs/releasing.md`](docs/releasing.md)
 - [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - [`SECURITY.md`](SECURITY.md)
+- [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)
 
 ## License
 
