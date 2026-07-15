@@ -16,3 +16,9 @@
 
 - Reworked the interface into a restrained system-utility layout with only plan, health, two quota windows, reset times, activity, and freshness
 - Reduced decoration, shadow weight, control count, and animation while preserving native window behavior
+
+### Fixed
+
+- Prevented the Codex app-server child process from flashing a console window during refresh on Windows
+- Replaced native select menus whose option text could become invisible in WebView2 dark mode
+- Made the card surface reliably opaque on transparent Windows desktops and redesigned the collapsed state as a percentage orb

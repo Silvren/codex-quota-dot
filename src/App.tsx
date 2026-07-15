@@ -6,7 +6,7 @@ import type { CodexUsageSnapshot, HealthState, QuotaWindow } from "./types/usage
 import { inferConsumption, normalizeSnapshot } from "./utils/usage";
 import { formatReset, formatTimestamp, formatUpdated } from "./utils/time";
 
-const COLLAPSED = 20;
+const COLLAPSED = 52;
 const EXPANDED_WIDTH = 280;
 const EXPANDED_HEIGHT = 286;
 const CACHE_KEY = "codex-quota-dot:snapshot:v1";
@@ -297,14 +297,20 @@ export default function App() {
   };
 
   if (!expanded) {
+    const orbRemaining = snapshot?.fiveHour.remainingPercent;
+    const orbHealth = snapshot?.fiveHour.health ?? health;
     return (
       <main className="dot-shell" onMouseEnter={enter} onMouseLeave={leave} onMouseDown={(event) => event.button === 0 && void drag()}>
         <button
-          className={`quota-dot ${health}`}
+          className={`quota-orb ${orbHealth}`}
           aria-label={`Codex quota: ${health}. Hover to expand; click to keep open.`}
           onClick={() => { setPinned(true); openPanel(); }}
         >
-          <span className={`dot-state ${health}`} aria-hidden="true" />
+          <span className="orb-value" aria-hidden="true">
+            <strong>{orbRemaining === null || orbRemaining === undefined ? "—" : Math.round(orbRemaining)}</strong>
+            {orbRemaining !== null && orbRemaining !== undefined && <small>%</small>}
+          </span>
+          <i className={`orb-state ${orbHealth}`} aria-hidden="true" />
         </button>
       </main>
     );
@@ -349,23 +355,36 @@ export default function App() {
 
       {settingsOpen && (
         <section className="settings-popover" aria-label="Settings">
-          <label>
+          <div className="setting-group">
             <span>Theme</span>
-            <select value={settings.theme} onChange={(event) => setSettings((current) => ({ ...current, theme: event.target.value as Theme }))}>
-              <option value="system">System</option>
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-            </select>
-          </label>
-          <label>
+            <div className="segmented-control" aria-label="Theme">
+              {(["system", "light", "dark"] as const).map((theme) => (
+                <button
+                  key={theme}
+                  className={settings.theme === theme ? "selected" : ""}
+                  aria-pressed={settings.theme === theme}
+                  onClick={() => setSettings((current) => ({ ...current, theme }))}
+                >
+                  {theme.charAt(0).toUpperCase() + theme.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="setting-group">
             <span>Refresh</span>
-            <select value={settings.refreshSeconds} onChange={(event) => setSettings((current) => ({ ...current, refreshSeconds: Number(event.target.value) as Settings["refreshSeconds"] }))}>
-              <option value={30}>30 sec</option>
-              <option value={60}>1 min</option>
-              <option value={300}>5 min</option>
-              <option value={0}>Manual</option>
-            </select>
-          </label>
+            <div className="segmented-control refresh-options" aria-label="Refresh interval">
+              {([[30, "30s"], [60, "1m"], [300, "5m"], [0, "Manual"]] as const).map(([seconds, label]) => (
+                <button
+                  key={seconds}
+                  className={settings.refreshSeconds === seconds ? "selected" : ""}
+                  aria-pressed={settings.refreshSeconds === seconds}
+                  onClick={() => setSettings((current) => ({ ...current, refreshSeconds: seconds }))}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
           <button onClick={() => void resetPosition()}>Reset position</button>
         </section>
       )}

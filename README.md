@@ -16,7 +16,7 @@ A lightweight, privacy-first desktop indicator for viewing Codex quota windows w
 - best-effort `consuming` / `idle` inference from successive quota changes
 - last-update and honest cached/unknown states
 
-The 20 px dot stays on top, can be dragged and snapped to screen edges, and expands into a 280 px card on hover. Click the dot to keep the card open; press `Esc` to close it.
+The compact quota orb stays on top, shows the current 5-hour percentage, can be dragged and snapped to screen edges, and expands into a 280 px card on hover. Click the orb to keep the card open; press `Esc` to close it.
 
 ## Privacy design
 

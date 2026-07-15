@@ -4,8 +4,9 @@
   background: transparent;
   font-synthesis: none;
   color-scheme: light;
-  --panel: rgba(242, 242, 244, .95);
+  --panel: rgb(242, 242, 244);
   --surface: rgba(255, 255, 255, .52);
+  --orb: rgba(242, 242, 244, .94);
   --text: rgba(28, 28, 30, .92);
   --secondary: rgba(60, 60, 67, .66);
   --tertiary: rgba(60, 60, 67, .48);
@@ -20,8 +21,9 @@
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --panel: rgba(43, 43, 46, .96);
+  --panel: rgb(43, 43, 46);
   --surface: rgba(255, 255, 255, .055);
+  --orb: rgba(48, 48, 51, .96);
   --text: rgba(245, 245, 247, .92);
   --secondary: rgba(235, 235, 245, .62);
   --tertiary: rgba(235, 235, 245, .42);
@@ -37,8 +39,9 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --panel: rgba(43, 43, 46, .96);
+    --panel: rgb(43, 43, 46);
     --surface: rgba(255, 255, 255, .055);
+    --orb: rgba(48, 48, 51, .96);
     --text: rgba(245, 245, 247, .92);
     --secondary: rgba(235, 235, 245, .62);
     --tertiary: rgba(235, 235, 245, .42);
@@ -57,26 +60,33 @@ html, body, #root { width: 100%; height: 100%; margin: 0; overflow: hidden; back
 button, select { font: inherit; }
 button { color: inherit; }
 
-.dot-shell { width: 20px; height: 20px; }
-.quota-dot {
-  width: 20px;
-  height: 20px;
+.dot-shell { width: 52px; height: 52px; padding: 3px; }
+.quota-orb {
+  position: relative;
+  width: 46px;
+  height: 46px;
   display: grid;
   place-items: center;
   padding: 0;
-  border: 1px solid rgba(60, 60, 67, .15);
-  border-radius: 50%;
-  background: rgba(238, 238, 241, .82);
-  box-shadow: 0 2px 7px rgba(0, 0, 0, .14);
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: 16px;
+  color: var(--text);
+  background: var(--orb);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, .12), inset 0 1px rgba(255, 255, 255, .28);
+  backdrop-filter: blur(12px);
   cursor: grab;
-  transition: transform 150ms ease, background-color 150ms ease;
+  transition: transform 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
 }
-.quota-dot:hover { transform: scale(1.04); background: rgba(244, 244, 246, .9); }
-.quota-dot:active { cursor: grabbing; }
-.dot-state { width: 7px; height: 7px; border-radius: 50%; background: var(--gray); }
-.dot-state.healthy, .status-dot.healthy, .quota-fill.healthy { background: var(--green); }
-.dot-state.warning, .status-dot.warning, .quota-fill.warning { background: var(--orange); }
-.dot-state.critical, .dot-state.exhausted, .status-dot.critical, .status-dot.exhausted, .quota-fill.critical, .quota-fill.exhausted { background: var(--red); }
+.quota-orb:hover { transform: scale(1.04); box-shadow: 0 4px 13px rgba(0, 0, 0, .14), inset 0 1px rgba(255, 255, 255, .3); }
+.quota-orb:active { cursor: grabbing; }
+.orb-value { display: flex; align-items: flex-end; justify-content: center; line-height: 1; font-variant-numeric: tabular-nums; }
+.orb-value strong { font-size: 16px; font-weight: 600; letter-spacing: -.04em; }
+.orb-value small { margin: 0 0 1px 1px; color: var(--secondary); font-size: 8px; font-weight: 600; }
+.orb-state { position: absolute; right: 6px; bottom: 6px; width: 5px; height: 5px; border-radius: 50%; background: var(--gray); }
+.orb-state.healthy, .status-dot.healthy, .quota-fill.healthy { background: var(--green); }
+.orb-state.warning, .status-dot.warning, .quota-fill.warning { background: var(--orange); }
+.orb-state.critical, .orb-state.exhausted, .status-dot.critical, .status-dot.exhausted, .quota-fill.critical, .quota-fill.exhausted { background: var(--red); }
 
 .panel {
   position: relative;
@@ -89,7 +99,6 @@ button { color: inherit; }
   border: 1px solid var(--hairline);
   border-radius: 16px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, .13);
-  backdrop-filter: blur(18px);
   animation: panel-in 180ms cubic-bezier(.2, .7, .25, 1) both;
 }
 .panel.closing { animation: panel-out 140ms ease both; }
@@ -161,7 +170,7 @@ button { color: inherit; }
   z-index: 2;
   top: 48px;
   right: 12px;
-  width: 224px;
+  width: 248px;
   padding: 7px;
   background: rgb(248, 248, 249);
   border: 1px solid var(--hairline);
@@ -172,24 +181,24 @@ button { color: inherit; }
 :root[data-theme="dark"] .settings-popover { background: rgb(55, 55, 58); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .settings-popover { background: rgb(55, 55, 58); } }
 @keyframes popover-in { from { opacity: 0; transform: translateY(-2px) scale(.99); } to { opacity: 1; transform: none; } }
-.settings-popover label {
-  height: 38px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 7px;
+.setting-group { padding: 7px; }
+.setting-group + .setting-group { border-top: 1px solid var(--hairline); }
+.setting-group > span { display: block; margin-bottom: 6px; color: var(--secondary); font-size: 10.5px; }
+.segmented-control { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; padding: 2px; border-radius: 8px; background: var(--track); }
+.segmented-control.refresh-options { grid-template-columns: repeat(4, 1fr); }
+.segmented-control button {
+  min-width: 0;
+  height: 24px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 6px;
   color: var(--secondary);
-  font-size: 11px;
+  background: transparent;
+  font-size: 10px;
+  cursor: default;
 }
-.settings-popover select {
-  max-width: 96px;
-  padding: 3px 5px;
-  border: 1px solid var(--hairline);
-  border-radius: 7px;
-  color: var(--text);
-  background: var(--surface);
-  font-size: 11px;
-}
+.segmented-control button:hover { color: var(--text); }
+.segmented-control button.selected { color: var(--text); background: var(--panel); box-shadow: 0 1px 3px rgba(0, 0, 0, .1); }
 .settings-popover > button {
   width: 100%;
   height: 34px;
@@ -204,7 +213,7 @@ button { color: inherit; }
 }
 .settings-popover > button:hover { color: var(--text); }
 
-button:focus-visible, select:focus-visible { outline: 2px solid rgba(80, 120, 180, .55); outline-offset: 1px; }
+button:focus-visible { outline: 2px solid rgba(80, 120, 180, .55); outline-offset: 1px; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }

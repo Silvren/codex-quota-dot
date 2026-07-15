@@ -11,6 +11,12 @@ use std::{
     time::{Duration, Instant},
 };
 
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
+#[cfg(target_os = "windows")]
+const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+
 pub struct AccountUsageResponse {
     pub account: Value,
     pub rate_limits: Value,
@@ -86,11 +92,21 @@ fn send(stdin: &mut impl Write, value: Value) -> Result<(), UsageError> {
 
 pub fn read_account_usage() -> Result<AccountUsageResponse, UsageError> {
     let binary = codex_binary();
-    let mut child = Command::new(binary)
+    let mut command = Command::new(binary);
+    command
         .args(["app-server", "--stdio"])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::null())
+        .stderr(Stdio::null());
+
+    // A GUI application must explicitly suppress the console of each child
+    // process. Without this flag, every periodic app-server refresh briefly
+    // flashes a terminal window on Windows even though our own binary uses the
+    // windows subsystem.
+    #[cfg(target_os = "windows")]
+    command.creation_flags(CREATE_NO_WINDOW);
+
+    let mut child = command
         .spawn()
         .map_err(|_| UsageError("Codex CLI was not found or could not be started"))?;
     let mut stdin = child
