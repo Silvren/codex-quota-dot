@@ -63,10 +63,10 @@ function healthText(health: HealthState, snapshot: CodexUsageSnapshot | null, er
   }
 }
 
-function QuotaRow({ label, value }: { label: string; value: QuotaWindow }) {
+function QuotaRow({ label, value, emphasis = false }: { label: string; value: QuotaWindow; emphasis?: boolean }) {
   const remaining = value.remainingPercent;
   return (
-    <section className="quota-row" aria-label={`${label} quota`}>
+    <section className={`quota-row ${emphasis ? "primary-quota" : "secondary-quota"} quota-${value.health}`} aria-label={`${label} quota`}>
       <div className="quota-heading">
         <span>{label}</span>
         <strong>{remaining === null ? "—" : `${Math.round(remaining)}%`}</strong>
@@ -320,7 +320,7 @@ export default function App() {
   const status = healthText(health, snapshot, error);
 
   return (
-    <main className={`panel ${closing ? "closing" : ""}`} onMouseEnter={enter} onMouseLeave={leave} title={error ?? undefined}>
+    <main className={`panel health-${health} ${closing ? "closing" : ""}`} onMouseEnter={enter} onMouseLeave={leave} title={error ?? undefined}>
       <header className="panel-header" onMouseDown={(event) => event.button === 0 && void drag()}>
         <div className="account-state">
           <strong>{formatPlan(snapshot?.plan)}</strong>
@@ -338,8 +338,8 @@ export default function App() {
       </header>
 
       <div className="quota-list">
-        <QuotaRow label="5-hour" value={snapshot?.fiveHour ?? UNKNOWN_WINDOW} />
-        <QuotaRow label="Weekly" value={snapshot?.weekly ?? UNKNOWN_WINDOW} />
+        <QuotaRow label="5-hour remaining" value={snapshot?.fiveHour ?? UNKNOWN_WINDOW} emphasis />
+        <QuotaRow label="Weekly remaining" value={snapshot?.weekly ?? UNKNOWN_WINDOW} />
       </div>
 
       <footer className="panel-footer">

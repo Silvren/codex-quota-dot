@@ -16,6 +16,7 @@
 
 - Reworked the interface into a restrained system-utility layout with only plan, health, two quota windows, reset times, activity, and freshness
 - Reduced decoration, shadow weight, control count, and animation while preserving native window behavior
+- Refined the expanded card hierarchy so the 5-hour quota is the primary metric and the weekly quota remains a compact secondary reference
 
 ### Fixed
 
