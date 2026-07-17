@@ -54,6 +54,6 @@ jobs:
         with:
           draft: true
           generate_release_notes: true
-          body_path: docs/release-notes-v0.2.0.md
+          body_path: docs/release-notes-v0.2.1.md
           files: |
             Codex-Quota-Dot-*

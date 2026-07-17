@@ -22,7 +22,7 @@ Download the latest build from [GitHub Releases](https://github.com/Silvren/code
 
 ## Current status
 
-`v0.2.0` replaces the previous interface with a smaller click-to-open quota orb and an explicit, persistent detail card. Windows x64 has received a native interaction pass; macOS builds are produced by CI and remain pending a hands-on native-device interaction pass.
+`v0.2.1` provides the smaller click-to-open quota orb and explicit, persistent detail card, with corrected alignment for fallback quota information. Windows x64 has received a native interaction pass; macOS builds are produced by CI and remain pending a hands-on native-device interaction pass.
 
 ### What it shows
 

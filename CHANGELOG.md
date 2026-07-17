@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.1] - 2026-07-17
+
+### Fixed
+
+- Aligned the short-window fallback and reset-credit footer columns while preserving the bottom-aligned refresh control.
+
 ## [0.2.0] - 2026-07-17
 
 ### Changed

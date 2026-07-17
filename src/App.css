@@ -240,7 +240,7 @@ button { color: inherit; font: inherit; }
   padding-top: 18px;
   display: grid;
   grid-template-columns: minmax(152px, 1.35fr) minmax(132px, 1fr) 48px;
-  align-items: end;
+  align-items: start;
   gap: 18px;
   border-top: 1px solid rgba(71, 80, 98, .075);
 }
@@ -264,14 +264,14 @@ button { color: inherit; font: inherit; }
 }
 .weekly-metric > strong small { margin-left: 2px; font-size: 16px; font-weight: 560; }
 .fallback-metric > strong {
-  margin-top: 9px;
+  margin-top: 15px;
   color: rgba(32, 34, 41, .58);
   font-size: 14px;
   font-weight: 560;
   letter-spacing: .02em;
   line-height: 1.1;
 }
-.credit-metric { align-self: stretch; padding-top: 1px; }
+.credit-metric { align-self: start; padding-top: 1px; }
 .credit-row {
   position: relative;
   margin-top: 15px;
@@ -309,6 +309,7 @@ button { color: inherit; font: inherit; }
 }
 
 .provider-mark {
+  align-self: end;
   width: 46px;
   height: 46px;
   display: grid;
