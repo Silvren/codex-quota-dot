@@ -53,7 +53,7 @@ These account methods are documented outside the experimental opt-in surface. We
 
 - App-server startup adds latency, so refresh is limited to once per minute by default.
 - Older Codex versions may lack the methods. The UI displays `Unknown` and retains only the last normalized cache.
-- `primary` and `secondary` are backend roles, not fixed durations. The provider classifies by `windowDurationMins`; a live 2026-07-15 Plus response exposed a 10080-minute window as `primary` and no 300-minute window, so the UI correctly reports the 5-hour value as unknown rather than mislabeling weekly data.
+- `primary` and `secondary` are backend roles, not fixed durations. The provider classifies by `windowDurationMins`; a live 2026-07-15 Plus response exposed a 10080-minute window as `primary` and no 300-minute window. The UI therefore treats the short window as unavailable and promotes the correctly identified weekly window instead of mislabeling it.
 - Account switching is owned by Codex. Each fetch starts a fresh child to avoid maintaining stale account state.
 - Raw stderr and error payloads are discarded to prevent accidental credential or account metadata logging.
 

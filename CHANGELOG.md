@@ -1,6 +1,18 @@
 # Changelog
 
-## [Unreleased]
+## [0.2.0] - 2026-07-17
+
+### Changed
+
+- Reworked the quota orb interaction model: hover only provides feedback, drag moves the widget, and click opens the card.
+- Added an explicit collapse control and stronger always-on-top state feedback.
+- Reduced the collapsed native window to 84 px with a 72 px orb.
+- Replaced the old hover-driven interface with an explicit click-to-open card.
+
+### Added
+
+- Weekly-quota fallback with a visible `周` / `W` marker when Codex does not return a short-period window.
+- Neutral unavailable messaging when no supported quota window is returned.
 
 ## [0.1.0] - 2026-07-15
 

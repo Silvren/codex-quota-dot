@@ -4,19 +4,45 @@ A lightweight, privacy-first desktop indicator for viewing Codex quota windows w
 
 > This is an independent open-source project and is not affiliated with or endorsed by OpenAI.
 
+中文简介：一个轻量、隐私优先的 Codex 配额桌面悬浮球，无需打开用量页面即可查看当前可用的短周期或每周额度、重置时间和消耗状态。
+
+## Interface preview
+
+![Codex Quota Dot interface, collapsed mode, and quota health colors](assets/codex-quota-dot-ui-showcase.jpg)
+
+The surface changes with the active quota window: blue for healthy (`50–100%`), amber for caution (`10–50%`), and coral for critical (`0–10%`). If Codex omits the short window, the orb falls back to weekly quota and displays a `周` / `W` marker.
+
+## Download
+
+Download the latest build from [GitHub Releases](https://github.com/Silvren/codex-quota-dot/releases/latest):
+
+- Windows x64
+- macOS Apple Silicon
+- macOS Intel
+
 ## Current status
 
-`v0.1.0` is release-ready for Windows x64. The compact UI, provider boundary, cache fallback, tray, tests, and release automation are implemented. The Windows build and primary interactions have been verified locally; macOS builds remain CI-validated until they receive a native-device interaction pass.
+`v0.2.0` replaces the previous interface with a smaller click-to-open quota orb and an explicit, persistent detail card. Windows x64 has received a native interaction pass; macOS builds are produced by CI and remain pending a hands-on native-device interaction pass.
 
 ### What it shows
 
 - ChatGPT plan reported by Codex
-- primary (normally 5-hour) and secondary (normally weekly) quota remaining
+- the currently available short-period and weekly quota windows
 - reset times and overall health
 - best-effort `consuming` / `idle` inference from successive quota changes
 - last-update and honest cached/unknown states
 
-The 80 px quota orb stays on top, shows the current 5-hour percentage, can be dragged and snapped to screen edges, and expands into a 320 px square quota card on hover. The card includes Chinese/English switching and an always-on-top control. Click the orb to keep the card open; press `Esc` to close it.
+The compact 72 px quota orb stays on top and shows the active quota percentage. Drag it to reposition and snap it to a screen edge; click it to open the 480 × 360 quota card. Hover never opens or closes the card. Use the explicit collapse control or press `Esc` to return to the orb. The card includes Chinese/English switching and a clearly indicated always-on-top toggle.
+
+## Quota-window availability
+
+Codex quota policy and the windows returned by `account/rateLimits/read` can vary by plan, workspace, promotion, and rollout. Some accounts may temporarily receive no traditional 5-hour window. Codex Quota Dot treats this as an unavailable window rather than a service failure:
+
+- when a short-period window is available, it remains the primary display;
+- when the short-period window is absent but a weekly window exists, the orb automatically displays the weekly value with a `周` / `W` marker;
+- when neither window is returned, the app uses a neutral unavailable state and keeps cached data clearly identified.
+
+This project does not claim that OpenAI has permanently or universally removed a specific quota window.
 
 ## Privacy design
 

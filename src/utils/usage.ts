@@ -1,5 +1,10 @@
 import type { CodexUsageSnapshot, HealthState, QuotaWindow } from "../types/usage";
 
+export type DisplayedQuotaWindow = {
+  kind: "fiveHour" | "weekly";
+  window: QuotaWindow;
+};
+
 export function healthForRemaining(value: number | null, warning = 50, critical = 20): HealthState {
   if (value === null || !Number.isFinite(value)) return "unknown";
   if (value <= 0) return "exhausted";
@@ -16,6 +21,16 @@ function normalizeWindow(value: QuotaWindow, warning: number, critical: number):
 
 export function normalizeSnapshot(value: CodexUsageSnapshot, warning = 50, critical = 20): CodexUsageSnapshot {
   return { ...value, schemaVersion: 1, fiveHour: normalizeWindow(value.fiveHour, warning, critical), weekly: normalizeWindow(value.weekly, warning, critical), warnings: Array.isArray(value.warnings) ? value.warnings : [] };
+}
+
+export function selectDisplayedWindow(value: CodexUsageSnapshot): DisplayedQuotaWindow | null {
+  if (value.fiveHour.remainingPercent !== null) {
+    return { kind: "fiveHour", window: value.fiveHour };
+  }
+  if (value.weekly.remainingPercent !== null) {
+    return { kind: "weekly", window: value.weekly };
+  }
+  return null;
 }
 
 export function inferConsumption(previous: CodexUsageSnapshot | null, current: CodexUsageSnapshot): CodexUsageSnapshot["consumptionState"] {
