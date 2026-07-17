@@ -1,14 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Pin } from "lucide-react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
+import { ChevronDown, Pin, Terminal } from "lucide-react";
 import { currentMonitor, getCurrentWindow, LogicalSize, PhysicalPosition } from "@tauri-apps/api/window";
-import codexMark from "./assets/codex-mark.svg";
 import "./App.css";
 import { fetchUsage } from "./providers/usageProvider";
 import type { CodexUsageSnapshot } from "./types/usage";
-import { inferConsumption, normalizeSnapshot } from "./utils/usage";
+import { inferConsumption, normalizeSnapshot, selectDisplayedWindow } from "./utils/usage";
 
-const COLLAPSED = 100;
-const EXPANDED = 320;
+const COLLAPSED = { width: 84, height: 84 } as const;
+const EXPANDED = { width: 480, height: 360 } as const;
 const CACHE_KEY = "codex-quota-dot:snapshot:v1";
 const SETTINGS_KEY = "codex-quota-dot:settings:v3";
 const POSITION_KEY = "codex-quota-dot:position";
@@ -36,6 +35,17 @@ const copy = {
     pinOn: "取消窗口置顶",
     pinOff: "窗口置顶",
     creditUnavailable: "当前数据源未提供重置机会到期时间。",
+    resetOpportunity: "重置机会",
+    consuming: "消耗中",
+    idle: "空闲中",
+    unknown: "监测中",
+    openAndMove: "点击查看额度，拖动调整位置",
+    collapse: "收起为悬浮球",
+    shortWindow: "短周期额度",
+    shortWindowUnavailable: "短周期额度暂未返回",
+    weeklyMarker: "周",
+    quotaPolicyNotice: "当前 Codex 未返回短周期额度，可能与套餐或额度策略调整有关",
+    quotaUnavailableNotice: "当前 Codex 未返回可用额度窗口，请稍后刷新",
   },
   en: {
     fiveHour: "5-hour remaining",
@@ -53,6 +63,17 @@ const copy = {
     pinOn: "Disable always on top",
     pinOff: "Keep window on top",
     creditUnavailable: "The current provider did not supply reset-credit expiration times.",
+    resetOpportunity: "Reset credits",
+    consuming: "Consuming",
+    idle: "Idle",
+    unknown: "Monitoring",
+    openAndMove: "Click to view usage; drag to reposition",
+    collapse: "Collapse to quota orb",
+    shortWindow: "Short-window quota",
+    shortWindowUnavailable: "Short-window quota unavailable",
+    weeklyMarker: "W",
+    quotaPolicyNotice: "Codex did not return a short quota window; this may depend on plan or quota-policy changes",
+    quotaUnavailableNotice: "Codex did not return an available quota window; try refreshing later",
   },
 } as const;
 
@@ -124,7 +145,7 @@ function weeklyDate(iso: string | null | undefined, language: Language): string 
 export default function App() {
   const [expanded, setExpanded] = useState(false);
   const [closing, setClosing] = useState(false);
-  const [pinnedOpen, setPinnedOpen] = useState(false);
+  const [draggingOrb, setDraggingOrb] = useState(false);
   const [alwaysOnTop, setAlwaysOnTop] = useState(true);
   const [creditOpen, setCreditOpen] = useState(false);
   const [settings, setSettings] = useState<Settings>(() => readSettings());
@@ -133,13 +154,16 @@ export default function App() {
   const previous = useRef<CodexUsageSnapshot | null>(null);
   const refreshingRef = useRef(false);
   const edgeAnchor = useRef({ right: false, bottom: false });
-  const openTimer = useRef<number | null>(null);
   const closeTimer = useRef<number | null>(null);
+  const orbGesture = useRef<{ pointerId: number; x: number; y: number; dragged: boolean } | null>(null);
 
-  const remaining = snapshot?.fiveHour.remainingPercent;
+  const displayed = snapshot ? selectDisplayedWindow(snapshot) : null;
+  const remaining = displayed?.window.remainingPercent;
+  const displayedKind = displayed?.kind ?? null;
   const tier = visualTier(remaining);
   const language = settings.language;
   const t = copy[language];
+  const displayedLabel = displayedKind === "weekly" ? t.weekly : displayedKind === "fiveHour" ? t.fiveHour : t.unavailable;
 
   const resizeNative = useCallback(async (nextExpanded: boolean) => {
     try {
@@ -147,7 +171,7 @@ export default function App() {
       const [monitor, position, currentSize] = await Promise.all([currentMonitor(), win.outerPosition(), win.outerSize()]);
       const nextSize = nextExpanded ? EXPANDED : COLLAPSED;
       if (!monitor) {
-        await win.setSize(new LogicalSize(nextSize, nextSize));
+        await win.setSize(new LogicalSize(nextSize.width, nextSize.height));
         return;
       }
       const currentRight = monitor.position.x + monitor.size.width - currentSize.width;
@@ -159,12 +183,13 @@ export default function App() {
           bottom: Math.abs(position.y - currentBottom) <= threshold,
         };
       }
-      const pixels = Math.round(nextSize * monitor.scaleFactor);
-      const maxX = monitor.position.x + monitor.size.width - pixels;
-      const maxY = monitor.position.y + monitor.size.height - pixels;
+      const pixelWidth = Math.round(nextSize.width * monitor.scaleFactor);
+      const pixelHeight = Math.round(nextSize.height * monitor.scaleFactor);
+      const maxX = monitor.position.x + monitor.size.width - pixelWidth;
+      const maxY = monitor.position.y + monitor.size.height - pixelHeight;
       const x = edgeAnchor.current.right ? maxX : Math.max(monitor.position.x, Math.min(position.x, maxX));
       const y = edgeAnchor.current.bottom ? maxY : Math.max(monitor.position.y, Math.min(position.y, maxY));
-      await win.setSize(new LogicalSize(nextSize, nextSize));
+      await win.setSize(new LogicalSize(nextSize.width, nextSize.height));
       await win.setPosition(new PhysicalPosition(x, y));
     } catch {
       // Browser preview has no native window.
@@ -180,9 +205,7 @@ export default function App() {
     }
   }, [expanded, resizeNative]);
 
-  const closePanel = useCallback((force = false) => {
-    if (pinnedOpen && !force) return;
-    if (openTimer.current !== null) window.clearTimeout(openTimer.current);
+  const closePanel = useCallback(() => {
     setClosing(true);
     closeTimer.current = window.setTimeout(() => {
       setExpanded(false);
@@ -190,7 +213,7 @@ export default function App() {
       setCreditOpen(false);
       void resizeNative(false);
     }, 150);
-  }, [pinnedOpen, resizeNative]);
+  }, [resizeNative]);
 
   const refresh = useCallback(async () => {
     if (refreshingRef.current) return;
@@ -198,7 +221,8 @@ export default function App() {
     setRefreshing(true);
     try {
       const next = normalizeSnapshot(await fetchUsage());
-      next.consumptionState = inferConsumption(previous.current, next);
+      const inferred = inferConsumption(previous.current, next);
+      next.consumptionState = inferred === "unknown" ? next.consumptionState : inferred;
       previous.current = next;
       setSnapshot(next);
       localStorage.setItem(CACHE_KEY, JSON.stringify(next));
@@ -227,10 +251,7 @@ export default function App() {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       if (creditOpen) setCreditOpen(false);
-      else {
-        setPinnedOpen(false);
-        closePanel(true);
-      }
+      else closePanel();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -272,30 +293,45 @@ export default function App() {
     };
   }, []);
 
-  const enter = () => {
-    if (closeTimer.current !== null) window.clearTimeout(closeTimer.current);
-    if (expanded || openTimer.current !== null) return;
-    openTimer.current = window.setTimeout(() => {
-      openTimer.current = null;
-      openPanel();
-    }, 150);
-  };
-
-  const leave = () => {
-    if (openTimer.current !== null) {
-      window.clearTimeout(openTimer.current);
-      openTimer.current = null;
-    }
-    if (pinnedOpen) return;
-    closeTimer.current = window.setTimeout(() => closePanel(), 450);
-  };
-
   const drag = async () => {
     try {
       await getCurrentWindow().startDragging();
     } catch {
       // Browser preview.
     }
+  };
+
+  const beginOrbGesture = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (event.button !== 0) return;
+    orbGesture.current = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, dragged: false };
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  };
+
+  const moveOrbGesture = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const gesture = orbGesture.current;
+    if (!gesture || gesture.pointerId !== event.pointerId || gesture.dragged) return;
+    if (Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y) < 5) return;
+    gesture.dragged = true;
+    setDraggingOrb(true);
+    void drag().finally(() => {
+      setDraggingOrb(false);
+      orbGesture.current = null;
+    });
+  };
+
+  const finishOrbGesture = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const gesture = orbGesture.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+    const shouldOpen = !gesture.dragged;
+    orbGesture.current = null;
+    setDraggingOrb(false);
+    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+    if (shouldOpen) openPanel();
+  };
+
+  const cancelOrbGesture = () => {
+    orbGesture.current = null;
+    setDraggingOrb(false);
   };
 
   const toggleTop = async () => {
@@ -310,17 +346,34 @@ export default function App() {
 
   if (!expanded) {
     return (
-      <main className="orb-shell" onMouseEnter={enter} onMouseLeave={leave} onMouseDown={(event) => event.button === 0 && void drag()}>
+      <main className="orb-shell">
         <button
-          className={`quota-orb tier-${tier}`}
-          aria-label={`${t.fiveHour}: ${remaining ?? t.unavailable}`}
-          onClick={() => { setPinnedOpen(true); openPanel(); }}
+          className={`quota-orb tier-${tier} ${draggingOrb ? "is-dragging" : ""}`}
+          aria-label={`${displayedLabel}: ${remaining ?? t.unavailable}. ${t.openAndMove}`}
+          title={t.openAndMove}
+          onPointerDown={beginOrbGesture}
+          onPointerMove={moveOrbGesture}
+          onPointerUp={finishOrbGesture}
+          onPointerCancel={cancelOrbGesture}
+          onClick={(event) => { if (event.detail === 0) openPanel(); }}
+          onKeyDown={(event) => {
+            if (event.key !== "Enter" && event.key !== " ") return;
+            event.preventDefault();
+            openPanel();
+          }}
+          onDragStart={(event) => event.preventDefault()}
         >
-          <span className="aurora" aria-hidden="true" />
+          <span
+            className="orb-ring"
+            style={{ "--quota-degrees": `${Math.max(0, Math.min(100, remaining ?? 0)) * 3.6}deg` } as CSSProperties}
+            aria-hidden="true"
+          />
+          <span className={`orb-status activity-${snapshot?.consumptionState ?? "unknown"}`} aria-hidden="true" />
           <span className="orb-metric" aria-hidden="true">
             <strong>{percent(remaining)}</strong>
             {remaining !== null && remaining !== undefined && <small>%</small>}
           </span>
+          {displayedKind === "weekly" && <span className="orb-window-tag" aria-hidden="true">{t.weeklyMarker}</span>}
         </button>
       </main>
     );
@@ -331,37 +384,57 @@ export default function App() {
   const credits = snapshot?.availableResets;
 
   return (
-    <main className={`quota-card tier-${tier} ${closing ? "closing" : ""}`} onMouseEnter={enter} onMouseLeave={leave}>
-      <span className="aurora" aria-hidden="true" />
+    <main className={`quota-card tier-${tier} ${closing ? "closing" : ""}`}>
       <header className="card-header" onMouseDown={(event) => event.button === 0 && void drag()}>
         <div>
           <strong className="eyebrow">{planLabel(snapshot?.plan)}</strong>
-          <p className="subtitle">{t.fiveHour}</p>
+          <p className="subtitle">{displayedLabel}</p>
         </div>
         <nav className="card-actions" aria-label="Widget controls" onMouseDown={(event) => event.stopPropagation()}>
-          <span className={`activity activity-${activity}`} title={`${activity} · ${snapshot?.isCached ? "cached" : "live"}`} aria-label={activity} />
-          <button className="language-button" onClick={() => setSettings((current) => ({ ...current, language: current.language === "zh" ? "en" : "zh" }))} title={t.language}>
-            {language === "zh" ? "EN" : "中"}
-          </button>
+          <span className={`activity-label activity-${activity}`} title={`${activity} · ${snapshot?.isCached ? "cached" : "live"}`}>
+            <i aria-hidden="true" />
+            {t[activity]}
+          </span>
+          <span className="language-switch" aria-label={t.language}>
+            <button className={language === "zh" ? "active" : ""} onClick={() => setSettings((current) => ({ ...current, language: "zh" }))}>中</button>
+            <button className={language === "en" ? "active" : ""} onClick={() => setSettings((current) => ({ ...current, language: "en" }))}>EN</button>
+          </span>
           <button className={`pin-button ${alwaysOnTop ? "active" : ""}`} onClick={() => void toggleTop()} title={alwaysOnTop ? t.pinOn : t.pinOff} aria-pressed={alwaysOnTop}>
             <Pin aria-hidden="true" />
+          </button>
+          <button className="collapse-button" onClick={() => closePanel()} title={t.collapse} aria-label={t.collapse}>
+            <ChevronDown aria-hidden="true" />
           </button>
         </nav>
       </header>
 
-      <section className="primary-metric" aria-label={t.fiveHour}>
+      <section className="primary-metric" aria-label={displayedLabel}>
         <strong>{percent(remaining)}</strong>
         {remaining !== null && remaining !== undefined && <small>%</small>}
       </section>
       <div className="progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={remaining ?? undefined}>
         <span style={{ width: `${remaining ?? 0}%` }} />
       </div>
-      <p className="reset-time">{resetLabel(snapshot?.fiveHour.resetsAt, language)}</p>
+      <p className={`reset-time ${displayedKind === "weekly" ? "quota-policy-note" : ""}`}>
+        {displayed
+          ? `${resetLabel(displayed.window.resetsAt, language)}${displayedKind === "weekly" ? ` · ${t.shortWindowUnavailable}` : ""}`
+          : t.quotaUnavailableNotice}
+      </p>
 
       <footer className="card-footer">
-        <div className="weekly-metric">
-          <p>{t.weekly} · {t.until} {weeklyDate(snapshot?.weekly.resetsAt, language)}</p>
-          <strong>{percent(weekly)}{weekly !== null && weekly !== undefined && <small>%</small>}</strong>
+        {displayedKind === "weekly" ? (
+          <div className="weekly-metric fallback-metric" title={t.quotaPolicyNotice}>
+            <p>{t.shortWindow}</p>
+            <strong>{t.unavailable}</strong>
+          </div>
+        ) : (
+          <div className="weekly-metric">
+            <p>{t.weekly} · {t.until} {weeklyDate(snapshot?.weekly.resetsAt, language)}</p>
+            <strong>{percent(weekly)}{weekly !== null && weekly !== undefined && <small>%</small>}</strong>
+          </div>
+        )}
+        <div className="credit-metric">
+          <p>{t.resetOpportunity}</p>
           <div className="credit-row">
             <span>{credits ?? "—"}{language === "zh" ? t.resetCredits : credits === 1 ? t.resetCredit : t.resetCredits}</span>
             <button onClick={() => setCreditOpen((open) => !open)}>{t.view}</button>
@@ -369,7 +442,7 @@ export default function App() {
           </div>
         </div>
         <button className={`provider-mark ${refreshing ? "refreshing" : ""}`} onClick={() => void refresh()} title={t.refresh} disabled={refreshing}>
-          <img src={codexMark} alt="" />
+          <Terminal aria-hidden="true" />
         </button>
       </footer>
     </main>

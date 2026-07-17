@@ -2,7 +2,7 @@
 
 ## Quota Float
 
-The Codex mark asset in `src/assets/codex-mark.svg` and visual references used for the quota card are derived from the MIT-licensed Quota Float project:
+The original visual reference used while developing the quota card was derived from the MIT-licensed Quota Float project:
 
 - Project: https://github.com/change-42-yhmm/quota-float
 - Copyright: 2026 Quota Float contributors

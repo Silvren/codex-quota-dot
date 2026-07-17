@@ -1,53 +1,62 @@
 # Design QA
 
-- Source visual truth: `C:\Users\ASUS\Documents\Tencent Files\189627153\nt_qq\nt_data\Pic\2026-07\Ori\68549b70f9632299c30faee478262cd6.jpg`
-- Supporting focused reference: `output\reference-quota-float\docs\images\quota-states.png`
-- Implementation screenshot: `output\design-qa\implementation-full-v1.png`
-- Collapsed-state screenshot: `output\design-qa\orb-v2.png`
-- Browser viewport: 1280 × 720; compared card region: 320 × 320 CSS px
-- State: Chinese, Plus plan, 36% five-hour remaining, 58% weekly remaining, caution palette
+- Source visual truth: `D:\Codex\codex-quota-dot\assets\codex-quota-dot-ui-showcase.jpg`
+- Primary implementation screenshot: `D:\Codex\codex-quota-dot\output\design-qa\caution-expanded.png`
+- Additional states: `healthy-expanded.png`, `critical-expanded.png`, `caution-collapsed.png`, `weekly-fallback.png`
+- Viewport: `480 × 360` for the expanded card; collapsed surface rendered inside the same QA viewport
+- Primary comparison state: Simplified Chinese, 36% five-hour remaining, caution tier
+- Browser: Codex in-app browser
 
 ## Full-view comparison evidence
 
-The implementation preserves the selected design's square floating-card composition, 38px corner radius, top-left plan and subtitle, top-right three-control cluster, oversized five-hour percentage, single progress lane, compact weekly block, reset-credit row, and lower-right Codex mark. The card is intentionally anchored at the top-left in browser preview because the native Tauri window itself is exactly the card size.
+- Combined source and three implementation health states: `D:\Codex\codex-quota-dot\output\design-qa\full-comparison.jpg`
+- The combined image verifies the landscape card silhouette, information hierarchy, state-dependent blue/amber/coral surfaces, progress bars, footer grid, and terminal refresh control.
 
-## Focused-region comparison evidence
+## Focused region comparison evidence
 
-The supporting 320px Quota Float card reference was compared with the implementation at its native 320px card size. Typography scale, 30px outer padding, 64px primary metric, 6px progress track, footer anchoring, provider-mark scale, action-control diameter, and state-dependent blue/yellow/orange palette match the visible reference structure. A separate focused crop was not required because the supporting reference already presents the card at a directly readable scale.
-
-## Required fidelity surfaces
-
-- Fonts and typography: passed. System display fonts, weights, letter spacing, large numeric hierarchy, and compact support text match the source language.
-- Spacing and layout rhythm: passed. Card dimensions, padding, radius, header/action spacing, primary metric, reset line, and footer placement match the target.
-- Colors and visual tokens: passed. Healthy, caution, critical, and unavailable palettes coordinate the aurora surface and progress lane while preserving readable foreground contrast.
-- Image quality and asset fidelity: passed. The real MIT-licensed Codex mark asset is used; Lucide supplies the pin icon. No placeholder or emoji asset remains.
-- Copy and content: passed. Chinese is the default, English toggle works, and plan/quota/reset labels use live provider data.
-
-## Interaction verification
-
-- Expanded the collapsed quota orb.
-- Switched Chinese to English and back.
-- Toggled always-on-top state.
-- Opened reset-credit details.
-- Verified refresh control and `Esc` collapse.
-- Browser console errors/warnings: none.
+- Source card crop beside the 36% implementation: `D:\Codex\codex-quota-dot\output\design-qa\focused-card-comparison.jpg`
+- Focused comparison was required because typography, header controls, divider placement, footer alignment, corner radius, and the compact terminal button are too small to judge reliably in the full presentation board.
 
 ## Findings
 
-No actionable P0, P1, or P2 visual differences remain after the native CSP fix.
+- No actionable P0, P1, or P2 visual mismatch remains.
+- Typography: the hierarchy, weight contrast, numeric scale, line height, and tracking match the reference closely. The implementation uses native SF Pro / Segoe UI Variable / Microsoft YaHei UI fallbacks so glyph metrics remain platform-appropriate.
+- Spacing and layout: the final `480 × 360` frame, 35 px radius, 36 px side padding, header rhythm, long progress rail, divider, two-column footer, and refresh control align with the reference card.
+- Colors and tokens: healthy uses cool blue, caution uses amber on warm ivory, and critical uses coral on blush. The source board's explicit `50–100%`, `10–50%`, and `0–10%` legend is treated as the semantic truth.
+- Image and icon fidelity: the supplied design board is preserved as the README showcase image. Visible UI icons use the existing icon library rather than handcrafted SVG or text-glyph substitutes.
+- Copy: plan, five-hour quota, reset countdown, weekly quota, reset credits, activity, language, pin, and refresh labels are present in Chinese and English.
+
+## Interaction verification
+
+- Collapsed orb opens the card on click.
+- Hovering the orb for more than one second does not open it.
+- Dragging the orb does not accidentally open the card.
+- Enter opens the focused orb for keyboard users.
+- The explicit collapse control returns to the orb.
+- `Esc` returns to the collapsed orb.
+- Chinese/English switching updates all visible copy.
+- Always-on-top control toggles its pressed state.
+- Healthy (74%), caution (36%), and critical (8%) colors were rendered and captured.
+- A live native response with no 5-hour window promoted the 57% weekly quota, displayed the `周` marker, and explained the unavailable short-period window without an error state.
+- Browser console errors checked: none.
 
 ## Comparison history
 
-- Pass 1 (browser): no P0/P1/P2 visual differences in the rendered card.
-- Native pass: P1 provider mark failed to render because Vite inlined the SVG as a data URL while the Tauri CSP allowed only `self` and `asset:` images.
-- Fix: added `data:` to the narrow `img-src` directive; no script or connection permission was broadened.
-- Post-fix evidence: native Release rebuilt and the provider mark rechecked in the Tauri window.
+### Iteration 1
+
+- Earlier evidence: `D:\Codex\codex-quota-dot\output\design-qa\implementation-320-v1.png`
+- Earlier P1/P2 findings: the implementation was a `320 × 320` square rather than the source's landscape card; the collapsed widget lacked the reference ring/status composition; header controls were visually enclosed rather than lightweight; state colors did not follow the source legend precisely.
+- Fixes: changed the native and web surface to `480 × 360`, rebuilt the card grid and header controls, added a functional quota ring and status dot, and introduced explicit healthy/caution/critical tokens.
+- Post-fix evidence: `focused-card-comparison.jpg` and `full-comparison.jpg`.
+
+### Iteration 2
+
+- Earlier P2 findings: first refresh replaced a provider-supplied consumption state with `unknown`, and the pin orientation did not match the diagonal reference icon.
+- Fixes: preserved a supplied state when inference is not yet possible and rotated the pin to match the reference.
+- Post-fix evidence: `caution-expanded.png`; the header now shows a concrete activity state and the corrected diagonal pin.
 
 ## Follow-up polish
 
-- P3: exact aurora hue can vary slightly between WebView2 and macOS WebKit color compositing.
-- P3: reset-credit expiration dates remain unavailable when the current Codex provider supplies only the count; the UI states this instead of inventing dates.
-
-## Final result
+- P3: native font rasterization and translucent-window shadow softness can vary slightly between Windows WebView2 and macOS WebKit. These platform-level differences do not affect layout or task completion.
 
 final result: passed

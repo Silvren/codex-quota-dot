@@ -34,12 +34,17 @@ jobs:
       - run: cargo test --manifest-path src-tauri/Cargo.toml
       - run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --no-deps -- -D warnings
       - run: npm run tauri build
-      - name: Create Windows portable ZIP and checksum
+      - name: Prepare Windows assets and checksums
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          Compress-Archive -LiteralPath src-tauri/target/release/codex-quota-dot.exe -DestinationPath "Codex-Quota-Dot-${{ github.ref_name }}-${{ matrix.label }}.zip"
-          (Get-FileHash "Codex-Quota-Dot-${{ github.ref_name }}-${{ matrix.label }}.zip" -Algorithm SHA256).Hash.ToLower() + "  Codex-Quota-Dot-${{ github.ref_name }}-${{ matrix.label }}.zip" | Set-Content "Codex-Quota-Dot-${{ github.ref_name }}-${{ matrix.label }}.zip.sha256" -NoNewline
+          $prefix = "Codex-Quota-Dot-${{ github.ref_name }}-${{ matrix.label }}"
+          Compress-Archive -LiteralPath src-tauri/target/release/codex-quota-dot.exe -DestinationPath "$prefix-portable.zip"
+          Copy-Item (Get-ChildItem src-tauri/target/release/bundle/nsis/*-setup.exe | Select-Object -First 1) "$prefix-setup.exe"
+          Copy-Item (Get-ChildItem src-tauri/target/release/bundle/msi/*.msi | Select-Object -First 1) "$prefix.msi"
+          Get-ChildItem "$prefix*" -File | ForEach-Object {
+            (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower() + "  " + $_.Name | Set-Content ($_.FullName + ".sha256") -NoNewline
+          }
       - name: Create macOS ZIP and checksum
         if: runner.os == 'macOS'
         run: |
@@ -49,6 +54,6 @@ jobs:
         with:
           draft: true
           generate_release_notes: true
+          body_path: docs/release-notes-v0.2.0.md
           files: |
-            Codex-Quota-Dot-*.zip
-            Codex-Quota-Dot-*.sha256
+            Codex-Quota-Dot-*

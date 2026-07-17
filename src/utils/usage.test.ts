@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { healthForRemaining, inferConsumption, normalizeSnapshot } from "./usage";
+import { healthForRemaining, inferConsumption, normalizeSnapshot, selectDisplayedWindow } from "./usage";
 import type { CodexUsageSnapshot } from "../types/usage";
 
 const snapshot = (remaining: number): CodexUsageSnapshot => ({
@@ -22,5 +22,25 @@ describe("inferConsumption", () => {
 describe("custom thresholds", () => {
   it("recomputes health without mutating percentages", () => {
     expect(normalizeSnapshot(snapshot(65), 70, 40).fiveHour.health).toBe("warning");
+  });
+});
+
+describe("selectDisplayedWindow", () => {
+  it("prefers the short quota window when it is available", () => {
+    expect(selectDisplayedWindow(snapshot(65))?.kind).toBe("fiveHour");
+  });
+
+  it("falls back to the weekly window when Codex omits the short window", () => {
+    const value = snapshot(65);
+    value.fiveHour.remainingPercent = null;
+    value.fiveHour.usedPercent = null;
+    expect(selectDisplayedWindow(value)?.kind).toBe("weekly");
+  });
+
+  it("returns no display window when Codex supplies neither quota", () => {
+    const value = snapshot(65);
+    value.fiveHour.remainingPercent = null;
+    value.weekly.remainingPercent = null;
+    expect(selectDisplayedWindow(value)).toBeNull();
   });
 });

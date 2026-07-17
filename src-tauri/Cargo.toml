@@ -1,6 +1,6 @@
 [package]
 name = "codex-quota-dot"
-version = "0.1.0"
+version = "0.2.0"
 description = "Privacy-first Codex quota desktop indicator"
 authors = ["Codex Quota Dot contributors"]
 edition = "2021"
