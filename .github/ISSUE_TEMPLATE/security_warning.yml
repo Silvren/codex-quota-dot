@@ -1,0 +1,72 @@
+name: Windows security warning or antivirus detection
+description: Report SmartScreen, Microsoft Defender, or another antivirus warning for a release artifact
+title: "[Security warning]: "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not disable antivirus protection or add an exclusion just to run the app. Do not attach tokens, account data, conversations, or private project files. For evidence of an actual vulnerability, use a private GitHub Security Advisory instead.
+  - type: input
+    id: version
+    attributes:
+      label: Codex Quota Dot version
+      placeholder: v0.2.1
+    validations:
+      required: true
+  - type: dropdown
+    id: asset
+    attributes:
+      label: Windows asset
+      options:
+        - Setup EXE
+        - MSI
+        - Portable ZIP / EXE
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Download URL
+      description: Use the exact page or asset URL. The canonical source is this repository's GitHub Releases page.
+    validations:
+      required: true
+  - type: input
+    id: sha256
+    attributes:
+      label: Calculated SHA-256
+      description: Follow docs/windows-download-safety.md to calculate it locally.
+    validations:
+      required: true
+  - type: input
+    id: security_product
+    attributes:
+      label: Security product and version
+      placeholder: Microsoft Defender, security intelligence 1.x.x.x
+    validations:
+      required: true
+  - type: input
+    id: detection
+    attributes:
+      label: Exact warning or detection name
+      placeholder: Copy the full threat name or SmartScreen message
+    validations:
+      required: true
+  - type: dropdown
+    id: stage
+    attributes:
+      label: When did it appear?
+      options:
+        - During download
+        - When opening the installer
+        - During installation
+        - On first launch
+        - During normal use
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Additional details and sanitized screenshot
+      description: Remove personal paths, account information, tokens, and unrelated files.
