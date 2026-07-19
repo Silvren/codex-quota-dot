@@ -20,6 +20,8 @@ Download the latest build from [GitHub Releases](https://github.com/Silvren/code
 - macOS Apple Silicon
 - macOS Intel
 
+> **Release signing:** current packages are not code-signed. Windows SmartScreen or antivirus software may therefore show a reputation or heuristic warning. Download only from this repository's GitHub Releases page, verify the accompanying `.sha256` file, and do not disable security software or add an exclusion just to run the app. See [Windows download safety](docs/windows-download-safety.md) for verification steps and reporting guidance.
+
 ## Current status
 
 `v0.2.1` provides the smaller click-to-open quota orb and explicit, persistent detail card, with corrected alignment for fallback quota information. Windows x64 has received a native interaction pass; macOS builds are produced by CI and remain pending a hands-on native-device interaction pass.
@@ -101,6 +103,7 @@ npm run tauri build
 - [`docs/data-source-research.md`](docs/data-source-research.md)
 - [`docs/privacy.md`](docs/privacy.md)
 - [`docs/security-model.md`](docs/security-model.md)
+- [`docs/windows-download-safety.md`](docs/windows-download-safety.md)
 - [`docs/releasing.md`](docs/releasing.md)
 - [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - [`SECURITY.md`](SECURITY.md)
