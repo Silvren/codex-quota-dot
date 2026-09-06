@@ -39,7 +39,7 @@ jobs:
         shell: pwsh
         run: |
           $prefix = "Codex-Quota-Dot-${{ github.ref_name }}-${{ matrix.label }}"
-          Compress-Archive -LiteralPath src-tauri/target/release/codex-quota-dot.exe -DestinationPath "$prefix-portable.zip"
+          Compress-Archive -LiteralPath src-tauri/target/release/codex-quota-dot.exe,LICENSE,THIRD_PARTY_NOTICES.md -DestinationPath "$prefix-portable.zip"
           Copy-Item (Get-ChildItem src-tauri/target/release/bundle/nsis/*-setup.exe | Select-Object -First 1) "$prefix-setup.exe"
           Copy-Item (Get-ChildItem src-tauri/target/release/bundle/msi/*.msi | Select-Object -First 1) "$prefix.msi"
           Get-ChildItem "$prefix*" -File | ForEach-Object {
@@ -54,6 +54,6 @@ jobs:
         with:
           draft: true
           generate_release_notes: true
-          body_path: docs/release-notes-v0.2.1.md
+          body_path: docs/release-notes-${{ github.ref_name }}.md
           files: |
             Codex-Quota-Dot-*

@@ -13,6 +13,8 @@ dist-ssr
 release/
 output/
 .playwright-cli/
+.agents/
+.codex/
 *.local
 
 # Editor directories and files

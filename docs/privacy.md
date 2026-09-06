@@ -4,7 +4,7 @@ Codex Quota Dot has no telemetry, analytics, ads, crash uploader, account servic
 
 ## Read
 
-The app asks the installed official Codex executable for account state and rate-limit state through its documented app-server protocol. It uses only plan type, two quota windows, reset timestamps, and reset-credit count.
+The app asks the installed official Codex executable for account state and rate-limit state through its documented app-server protocol. It uses only plan type, two quota windows, reset timestamps, reset-credit count, and available reset-credit expiration timestamps. Reset-credit identifiers and grant descriptions are not forwarded to the renderer or stored in its cache.
 
 ## Never read or store
 

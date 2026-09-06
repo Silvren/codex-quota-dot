@@ -9,6 +9,10 @@ export interface QuotaWindow {
   health: HealthState;
 }
 
+export interface ResetCredit {
+  expiresAt: string | null;
+}
+
 export interface CodexUsageSnapshot {
   schemaVersion: 1;
   providerId: string;
@@ -16,6 +20,7 @@ export interface CodexUsageSnapshot {
   fiveHour: QuotaWindow;
   weekly: QuotaWindow;
   availableResets: number | null;
+  resetCredits?: ResetCredit[] | null;
   consumptionState: ConsumptionState;
   authenticated: boolean;
   fetchedAt: string;

@@ -140,6 +140,12 @@ pub fn read_account_usage() -> Result<AccountUsageResponse, UsageError> {
             json!({"method":"account/read","id":2,"params":{"refreshToken":false}}),
         )?;
         let account = receive_id(&receiver, 2, Duration::from_secs(10))?;
+        if account.get("account").is_none_or(Value::is_null) {
+            return Ok(AccountUsageResponse {
+                account,
+                rate_limits: json!({}),
+            });
+        }
         send(
             &mut stdin,
             json!({"method":"account/rateLimits/read","id":3}),

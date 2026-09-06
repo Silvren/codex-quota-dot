@@ -25,8 +25,8 @@ export default defineConfig(async () => ({
         }
       : undefined,
     watch: {
-      // 3. tell Vite to ignore watching `src-tauri`
-      ignored: ["**/src-tauri/**"],
+      // Build artifacts can be locked by Windows while being copied or launched.
+      ignored: ["**/src-tauri/**", "**/output/**"],
     },
   },
 }));

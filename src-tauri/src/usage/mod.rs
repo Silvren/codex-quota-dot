@@ -27,6 +27,12 @@ pub struct QuotaWindow {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct ResetCredit {
+    expires_at: Option<String>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CodexUsageSnapshot {
     schema_version: u8,
     provider_id: &'static str,
@@ -34,6 +40,7 @@ pub struct CodexUsageSnapshot {
     five_hour: QuotaWindow,
     weekly: QuotaWindow,
     available_resets: Option<u64>,
+    reset_credits: Option<Vec<ResetCredit>>,
     consumption_state: &'static str,
     authenticated: bool,
     fetched_at: String,
@@ -63,8 +70,8 @@ fn health(remaining: Option<f64>) -> &'static str {
     match remaining {
         None => "unknown",
         Some(value) if value <= 0.0 => "exhausted",
-        Some(value) if value < 20.0 => "critical",
-        Some(value) if value <= 50.0 => "warning",
+        Some(value) if value < 10.0 => "critical",
+        Some(value) if value < 50.0 => "warning",
         Some(_) => "healthy",
     }
 }
@@ -89,24 +96,40 @@ fn parse_window(value: Option<&Value>) -> QuotaWindow {
 }
 
 fn find_window_by_duration(rate_limits: &Value, expected_minutes: u64) -> QuotaWindow {
-    let mut snapshots = Vec::new();
-    if let Some(default) = rate_limits.get("rateLimits") {
-        snapshots.push(default);
-    }
-    if let Some(by_id) = rate_limits
-        .get("rateLimitsByLimitId")
-        .and_then(Value::as_object)
-    {
-        snapshots.extend(by_id.values());
-    }
-    let window = snapshots
+    // Never combine a Codex window with another model's quota bucket.
+    let snapshot = rate_limit_snapshot(rate_limits);
+    let window = snapshot
         .into_iter()
-        .flat_map(|snapshot| [snapshot.get("primary"), snapshot.get("secondary")])
+        .flat_map(|value| [value.get("primary"), value.get("secondary")])
         .flatten()
         .find(|window| {
             window.get("windowDurationMins").and_then(Value::as_u64) == Some(expected_minutes)
         });
     parse_window(window)
+}
+
+fn rate_limit_snapshot(value: &Value) -> Option<&Value> {
+    value
+        .get("rateLimitsByLimitId")
+        .and_then(|buckets| buckets.get("codex"))
+        .filter(|bucket| bucket.is_object())
+        .or_else(|| value.get("rateLimits").filter(|bucket| bucket.is_object()))
+}
+
+fn parse_reset_credits(value: &Value) -> Option<Vec<ResetCredit>> {
+    value
+        .get("rateLimitResetCredits")?
+        .get("credits")?
+        .as_array()
+        .map(|credits| {
+            credits
+                .iter()
+                .filter(|credit| credit.get("status").and_then(Value::as_str) == Some("available"))
+                .map(|credit| ResetCredit {
+                    expires_at: timestamp(credit.get("expiresAt").and_then(Value::as_i64)),
+                })
+                .collect()
+        })
 }
 
 pub fn fetch_usage() -> Result<CodexUsageSnapshot, UsageError> {
@@ -130,6 +153,7 @@ pub fn fetch_usage() -> Result<CodexUsageSnapshot, UsageError> {
             five_hour: unknown_window(),
             weekly: unknown_window(),
             available_resets: None,
+            reset_credits: None,
             consumption_state: "unknown",
             authenticated: false,
             fetched_at: now,
@@ -140,7 +164,7 @@ pub fn fetch_usage() -> Result<CodexUsageSnapshot, UsageError> {
         });
     }
 
-    if response.rate_limits.get("rateLimits").is_none() {
+    if rate_limit_snapshot(&response.rate_limits).is_none() {
         return Err(UsageError("Codex returned no rate-limit snapshot"));
     }
     let five_hour = find_window_by_duration(&response.rate_limits, 5 * 60);
@@ -159,6 +183,7 @@ pub fn fetch_usage() -> Result<CodexUsageSnapshot, UsageError> {
         five_hour,
         weekly,
         available_resets,
+        reset_credits: parse_reset_credits(&response.rate_limits),
         consumption_state: "unknown",
         authenticated: true,
         fetched_at: now.clone(),
@@ -173,6 +198,64 @@ pub fn fetch_usage() -> Result<CodexUsageSnapshot, UsageError> {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    #[test]
+    fn retains_available_credit_expirations_without_identifiers() {
+        let response = json!({"rateLimitResetCredits":{"availableCount":2,"credits":[
+            {"id":"not-for-renderer","status":"available","expiresAt":1791091536},
+            {"status":"redeemed","expiresAt":1791091536},
+            {"status":"expired","expiresAt":1791091536},
+            {"status":"available","expiresAt":1791155652}
+        ]}});
+        let credits = parse_reset_credits(&response).unwrap();
+        assert_eq!(credits.len(), 2);
+        assert_eq!(
+            credits[0].expires_at.as_deref(),
+            Some("2026-10-04T05:25:36+00:00")
+        );
+        assert_eq!(
+            serde_json::to_value(&credits).unwrap()[0]
+                .as_object()
+                .unwrap()
+                .len(),
+            1
+        );
+    }
+
+    #[test]
+    fn distinguishes_missing_details_from_no_available_credits() {
+        assert!(parse_reset_credits(&json!({})).is_none());
+        assert!(parse_reset_credits(&json!({"rateLimitResetCredits":{"credits":null}})).is_none());
+        assert!(
+            parse_reset_credits(&json!({"rateLimitResetCredits":{"credits":[]}}))
+                .unwrap()
+                .is_empty()
+        );
+    }
+
+    #[test]
+    fn invalid_credit_expiration_stays_unknown() {
+        let response = json!({"rateLimitResetCredits":{"credits":[
+            {"status":"available"}, {"status":"available","expiresAt":"bad"},
+            {"status":"available","expiresAt":9223372036854775807_i64}
+        ]}});
+        assert!(parse_reset_credits(&response)
+            .unwrap()
+            .iter()
+            .all(|credit| credit.expires_at.is_none()));
+    }
+
+    #[test]
+    #[ignore = "Requires a signed-in local Codex with reset credits; read-only account request"]
+    fn live_reset_credit_expirations_reach_snapshot() {
+        let snapshot = fetch_usage().expect("read local Codex account usage");
+        let credits = snapshot
+            .reset_credits
+            .expect("reset-credit details returned");
+        assert!(!credits.is_empty());
+        assert!(credits.iter().all(|credit| credit.expires_at.is_some()));
+        println!("resetCredits={}", serde_json::to_string(&credits).unwrap());
+    }
 
     #[test]
     fn parses_and_clamps_window() {
@@ -200,6 +283,35 @@ mod tests {
         assert_eq!(
             find_window_by_duration(&response, 10080).remaining_percent,
             Some(77.0)
+        );
+    }
+
+    #[test]
+    fn prefers_codex_bucket_and_does_not_mix_models() {
+        let response = json!({
+            "rateLimits": {"primary":{"usedPercent":99,"windowDurationMins":300}},
+            "rateLimitsByLimitId": {
+                "codex":{"secondary":{"usedPercent":20,"windowDurationMins":10080}},
+                "other":{"primary":{"usedPercent":90,"windowDurationMins":300}}
+            }
+        });
+        assert_eq!(
+            find_window_by_duration(&response, 300).remaining_percent,
+            None
+        );
+        assert_eq!(
+            find_window_by_duration(&response, 10080).remaining_percent,
+            Some(80.0)
+        );
+    }
+
+    #[test]
+    fn accepts_named_bucket_without_legacy_snapshot() {
+        let response = json!({"rateLimitsByLimitId":{"codex":{"primary":{"usedPercent":40,"windowDurationMins":300}}}});
+        assert!(rate_limit_snapshot(&response).is_some());
+        assert_eq!(
+            find_window_by_duration(&response, 300).remaining_percent,
+            Some(60.0)
         );
     }
 }

@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.2.2] - 2026-09-06
+
+### Changed
+
+- Reduced the detail card to 320 × 256 logical pixels and the orb to 56 px; refined spacing, restrained colors, rounded progress indicators and control feedback.
+- Removed the orb activity dot; activity remains visible in the expanded card.
+- Replaced the icon package with three inline SVG controls and removed unused time helpers and mobile icon assets.
+
+### Fixed
+
+- Display individual reset-credit expiration dates from the official app-server response, sorted by expiration in local time.
+- Prefer the Codex quota bucket without mixing limits from other model buckets.
+- Preserve explicit zero in browser previews and show cached/error/unauthenticated states honestly.
+- Keep reset-credit text aligned, dismiss details on outside click, and prevent refresh subprocess console flashes on Windows.
+
 ## [0.2.1] - 2026-07-17
 
 ### Fixed

@@ -48,6 +48,11 @@ These account methods are documented outside the experimental opt-in surface. We
 | `weekly.usedPercent` | any window with `windowDurationMins == 10080` | Searches both the default snapshot and `rateLimitsByLimitId`. |
 | `resetsAt` | window `resetsAt` | Unix seconds converted to RFC 3339 UTC. |
 | `availableResets` | `rateLimitResetCredits.availableCount` | Nullable when backend does not supply reset credits. |
+| `resetCredits[].expiresAt` | `rateLimitResetCredits.credits[].expiresAt` | Only `status == available`; Unix seconds converted to RFC 3339 UTC, then displayed in local time. IDs and grant descriptions are not retained. |
+
+### Reset-credit expiration verification (2026-09-06)
+
+A read-only request through the same installed Codex app-server used by the widget returned both `availableCount` and per-credit `status`/`expiresAt`. The old adapter dropped the details, and the UI unconditionally showed an unavailable message. The adapter now forwards only available credits' expiration dates. Missing/invalid dates remain unknown, old cached snapshots remain compatible, and the UI orders known dates earliest first. The explicit ignored Rust test `live_reset_credit_expirations_reach_snapshot` checks this path with a signed-in local account without logging identifiers or credentials.
 
 ## Compatibility and risks
 

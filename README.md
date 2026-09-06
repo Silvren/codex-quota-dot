@@ -8,7 +8,7 @@ A lightweight, privacy-first desktop indicator for viewing Codex quota windows w
 
 ## Interface preview
 
-![Codex Quota Dot interface, collapsed mode, and quota health colors](assets/codex-quota-dot-ui-showcase.jpg)
+![Codex Quota Dot v0.2.2: compact cards and quota orbs in three health states](assets/codex-quota-dot-ui.jpg)
 
 The surface changes with the active quota window: blue for healthy (`50–100%`), amber for caution (`10–50%`), and coral for critical (`0–10%`). If Codex omits the short window, the orb falls back to weekly quota and displays a `周` / `W` marker.
 
@@ -24,17 +24,20 @@ Download the latest build from [GitHub Releases](https://github.com/Silvren/code
 
 ## Current status
 
-`v0.2.1` provides the smaller click-to-open quota orb and explicit, persistent detail card, with corrected alignment for fallback quota information. Windows x64 has received a native interaction pass; macOS builds are produced by CI and remain pending a hands-on native-device interaction pass.
+`v0.2.2` refines the compact interface and fixes reset-credit expiration details, cached/error states, and quota-bucket selection. Windows builds and the live read-only Codex data path are verified locally. The latest visual pass was checked in a browser; native multi-monitor/DPI behavior and macOS interaction still need hands-on checks.
 
 ### What it shows
 
 - ChatGPT plan reported by Codex
 - the currently available short-period and weekly quota windows
 - reset times and overall health
+- individual reset-credit expiration dates, shown in local time and sorted earliest first
 - best-effort `consuming` / `idle` inference from successive quota changes
 - last-update and honest cached/unknown states
 
-The compact 72 px quota orb stays on top and shows the active quota percentage. Drag it to reposition and snap it to a screen edge; click it to open the 480 × 360 quota card. Hover never opens or closes the card. Use the explicit collapse control or press `Esc` to return to the orb. The card includes Chinese/English switching and a clearly indicated always-on-top toggle.
+The compact **56 px quota orb** stays on top and shows the active quota percentage. Drag it to reposition and snap it to a screen edge; click it to open the **320 × 256 quota card**. Hover never opens or closes the card. Use the explicit collapse control or press `Esc` to return to the orb. The card includes Chinese/English switching and a clearly indicated always-on-top toggle. Sizes are logical pixels and follow OS display scaling.
+
+The runtime has just three frontend dependencies (React, React DOM and the Tauri API); the three control icons are inline SVG. There is no bundled browser, sync service, mobile client, telemetry, or extra server in this desktop release.
 
 ## Quota-window availability
 
@@ -93,7 +96,7 @@ npm run tauri build
 - Rust/native build verification is required on every target OS; WebView behavior differs across Windows and macOS.
 - Each refresh currently starts a short-lived app-server subprocess. A future release may reuse the supported local daemon transport after lifecycle behavior is validated.
 - Native behavior still needs a hands-on pass on each supported macOS architecture before public release.
-- Start-at-login and a full settings screen are intentionally not included in `v0.1.0`; the widget keeps controls limited to language, always-on-top, reset-credit details, and refresh.
+- Start-at-login and a full settings screen are intentionally not included; the widget keeps controls limited to language, always-on-top, reset-credit details, and refresh.
 - `consuming` is inferred from a decrease between snapshots. It does not mean a Codex task is definitely running.
 - The provider depends on the installed Codex version exposing the documented app-server account methods. Structural changes fail closed as `Unknown`.
 
