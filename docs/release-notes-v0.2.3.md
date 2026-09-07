@@ -9,6 +9,6 @@
 - 跨周期变化不再错误判断为正在消耗。保留既有设置和旧缓存兼容。
 - 不添加依赖，窗口仍为 320 × 256，小球仍为 56 px。
 
-Verification: 45 frontend tests and 12 Rust tests passed; the optional signed-in live-credit test was not run for this patch. Chinese/English weekly-only, custom-period, missing-data and default Plus browser previews were checked. Pro scenarios use synthetic fixtures, not a live Pro account. Windows build verified locally; macOS and native multi-monitor behavior have not been re-tested for this patch.
+Verification: 45 frontend tests and 12 Rust tests passed; the optional signed-in live-credit test was not run for this patch. Chinese/English weekly-only, custom-period, missing-data and default Plus browser previews were checked. Windows build verified locally; macOS and native multi-monitor behavior have not been re-tested for this patch.
 
 Packages are unsigned. Check the adjacent SHA-256 file before installing.

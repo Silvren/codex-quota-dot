@@ -51,7 +51,7 @@ Codex Quota Dot is not restricted to Plus: it reads the actual quota windows ret
 
 中文说明：Plus、Pro 等套餐统一按实际返回的额度周期显示。没有五小时窗口但有周额度时，正常展示周额度和重置时间；没有返回数据不等于无限额度。
 
-This project does not claim that OpenAI has permanently or universally removed a specific quota window. See [official pricing and usage guidance](https://learn.chatgpt.com/docs/pricing). Pro weekly-only behavior is covered by synthetic API fixtures and browser checks; a live Pro account has not been used for validation.
+This project does not claim that OpenAI has permanently or universally removed a specific quota window. See [official pricing and usage guidance](https://learn.chatgpt.com/docs/pricing).
 
 ## Privacy design
 
