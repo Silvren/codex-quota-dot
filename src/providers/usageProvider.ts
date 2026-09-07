@@ -27,8 +27,15 @@ export async function fetchUsage(): Promise<CodexUsageSnapshot> {
     const weekly = previewWindow === "none"
       ? { ...mock.weekly, remainingPercent: null, usedPercent: null, resetsAt: null, health: "unknown" as const }
       : mock.weekly;
+    const minutes = Number(params.get("duration"));
+    const windows = [fiveHour, weekly].filter((window) => window.remainingPercent !== null);
+    if (Number.isFinite(minutes) && minutes > 0 && windows[0]) {
+      windows[0] = { ...windows[0], resetDurationSeconds: minutes * 60 };
+    }
     return {
       ...mock,
+      plan: params.get("plan") === "pro" ? "Pro" : mock.plan,
+      windows,
       fiveHour,
       weekly,
       consumptionState: previewActivity === "idle" || previewActivity === "unknown" ? previewActivity : mock.consumptionState,

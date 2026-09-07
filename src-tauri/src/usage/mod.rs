@@ -39,6 +39,7 @@ pub struct CodexUsageSnapshot {
     plan: Option<String>,
     five_hour: QuotaWindow,
     weekly: QuotaWindow,
+    windows: Vec<QuotaWindow>,
     available_resets: Option<u64>,
     reset_credits: Option<Vec<ResetCredit>>,
     consumption_state: &'static str,
@@ -95,17 +96,23 @@ fn parse_window(value: Option<&Value>) -> QuotaWindow {
     }
 }
 
-fn find_window_by_duration(rate_limits: &Value, expected_minutes: u64) -> QuotaWindow {
+fn parse_windows(rate_limits: &Value) -> Vec<QuotaWindow> {
     // Never combine a Codex window with another model's quota bucket.
-    let snapshot = rate_limit_snapshot(rate_limits);
-    let window = snapshot
+    rate_limit_snapshot(rate_limits)
         .into_iter()
         .flat_map(|value| [value.get("primary"), value.get("secondary")])
         .flatten()
-        .find(|window| {
-            window.get("windowDurationMins").and_then(Value::as_u64) == Some(expected_minutes)
-        });
-    parse_window(window)
+        .filter(|window| window.is_object())
+        .map(|window| parse_window(Some(window)))
+        .collect()
+}
+
+fn find_window_by_duration(rate_limits: &Value, expected_minutes: u64) -> QuotaWindow {
+    // Retain legacy fields for old cached snapshots; the UI uses windows.
+    parse_windows(rate_limits)
+        .into_iter()
+        .find(|window| window.reset_duration_seconds == expected_minutes.checked_mul(60))
+        .unwrap_or_else(unknown_window)
 }
 
 fn rate_limit_snapshot(value: &Value) -> Option<&Value> {
@@ -152,6 +159,7 @@ pub fn fetch_usage() -> Result<CodexUsageSnapshot, UsageError> {
             plan: None,
             five_hour: unknown_window(),
             weekly: unknown_window(),
+            windows: Vec::new(),
             available_resets: None,
             reset_credits: None,
             consumption_state: "unknown",
@@ -182,6 +190,7 @@ pub fn fetch_usage() -> Result<CodexUsageSnapshot, UsageError> {
         plan,
         five_hour,
         weekly,
+        windows: parse_windows(&response.rate_limits),
         available_resets,
         reset_credits: parse_reset_credits(&response.rate_limits),
         consumption_state: "unknown",
@@ -198,6 +207,46 @@ pub fn fetch_usage() -> Result<CodexUsageSnapshot, UsageError> {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    #[test]
+    fn preserves_weekly_only_pro_snapshot() {
+        let response = json!({"rateLimits":{"planType":"pro","primary":{
+            "usedPercent":23,"windowDurationMins":10080},"secondary":null}});
+        let windows = parse_windows(&response);
+        assert_eq!(windows.len(), 1);
+        assert_eq!(windows[0].remaining_percent, Some(77.0));
+        assert_eq!(windows[0].reset_duration_seconds, Some(604800));
+    }
+
+    #[test]
+    fn preserves_other_and_unknown_durations() {
+        let response = json!({"rateLimits":{"primary":{"usedPercent":0,"windowDurationMins":1440},
+            "secondary":{"usedPercent":100}}});
+        let windows = parse_windows(&response);
+        assert_eq!(windows.len(), 2);
+        assert_eq!(windows[0].reset_duration_seconds, Some(86400));
+        assert_eq!(windows[0].remaining_percent, Some(100.0));
+        assert_eq!(windows[1].reset_duration_seconds, None);
+        assert_eq!(windows[1].remaining_percent, Some(0.0));
+    }
+
+    #[test]
+    fn absent_windows_do_not_mean_unlimited() {
+        let response = json!({"rateLimits":{"primary":null,"secondary":null,
+            "credits":{"unlimited":true}}});
+        assert!(parse_windows(&response).is_empty());
+    }
+
+    #[test]
+    fn adaptive_windows_do_not_mix_buckets() {
+        let response = json!({"rateLimits":{"primary":{"usedPercent":99,"windowDurationMins":300}},
+            "rateLimitsByLimitId":{"codex":{"secondary":{"usedPercent":20,"windowDurationMins":1440}},
+            "other":{"primary":{"usedPercent":90,"windowDurationMins":300}}}});
+        let windows = parse_windows(&response);
+        assert_eq!(windows.len(), 1);
+        assert_eq!(windows[0].remaining_percent, Some(80.0));
+        assert_eq!(windows[0].reset_duration_seconds, Some(86400));
+    }
 
     #[test]
     fn retains_available_credit_expirations_without_identifiers() {

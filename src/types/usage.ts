@@ -19,6 +19,7 @@ export interface CodexUsageSnapshot {
   plan: string | null;
   fiveHour: QuotaWindow;
   weekly: QuotaWindow;
+  windows?: QuotaWindow[]; // Optional only for pre-adaptive cached snapshots.
   availableResets: number | null;
   resetCredits?: ResetCredit[] | null;
   consumptionState: ConsumptionState;

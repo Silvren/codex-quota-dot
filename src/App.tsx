@@ -4,7 +4,7 @@ import { currentMonitor, getCurrentWindow, LogicalSize, PhysicalPosition } from 
 import "./App.css";
 import { fetchUsage } from "./providers/usageProvider";
 import type { CodexUsageSnapshot } from "./types/usage";
-import { inferConsumption, normalizeSnapshot, selectDisplayedWindow } from "./utils/usage";
+import { availableWindows, inferConsumption, normalizeSnapshot, quotaLabel } from "./utils/usage";
 
 const COLLAPSED = { width: 64, height: 64 } as const;
 const EXPANDED = { width: 320, height: 256 } as const;
@@ -20,8 +20,6 @@ const DEFAULT_SETTINGS: Settings = { language: "zh", refreshSeconds: 60 };
 
 const copy = {
   zh: {
-    fiveHour: "5 小时剩余",
-    weekly: "本周剩余",
     until: "至",
     view: "查看",
     unavailable: "暂无额度数据",
@@ -44,10 +42,8 @@ const copy = {
     unknown: "监测中",
     openAndMove: "点击查看额度，拖动调整位置",
     collapse: "收起为悬浮球",
-    shortWindow: "短周期额度",
-    shortWindowUnavailable: "短周期额度暂未返回",
+    nextReset: "下次重置",
     weeklyMarker: "周",
-    quotaPolicyNotice: "当前 Codex 未返回短周期额度，可能与套餐或额度策略调整有关",
     quotaUnavailableNotice: "当前 Codex 未返回可用额度窗口，请稍后刷新",
     cached: "上次数据",
     refreshFailed: "更新失败，请检查 Codex 登录后重试",
@@ -59,8 +55,6 @@ const copy = {
     topFailed: "置顶设置失败，请重试",
   },
   en: {
-    fiveHour: "5-hour remaining",
-    weekly: "Weekly remaining",
     until: "until",
     view: "View",
     unavailable: "Quota unavailable",
@@ -83,10 +77,8 @@ const copy = {
     unknown: "Monitoring",
     openAndMove: "Click to view usage; drag to reposition",
     collapse: "Collapse to quota orb",
-    shortWindow: "Short-window quota",
-    shortWindowUnavailable: "Short-window quota unavailable",
+    nextReset: "Next reset",
     weeklyMarker: "W",
-    quotaPolicyNotice: "Codex did not return a short quota window; this may depend on plan or quota-policy changes",
     quotaUnavailableNotice: "Codex did not return an available quota window; try refreshing later",
     cached: "Saved data",
     refreshFailed: "Update failed. Check your Codex login and retry",
@@ -183,14 +175,16 @@ export default function App() {
   const closeTimer = useRef<number | null>(null);
   const orbGesture = useRef<{ pointerId: number; x: number; y: number; dragged: boolean } | null>(null);
 
-  const displayed = snapshot?.authenticated ? selectDisplayedWindow(snapshot) : null;
+  const windows = snapshot?.authenticated ? availableWindows(snapshot) : [];
+  const displayed = windows[0] ?? null;
+  const secondary = windows[1] ?? null;
   const remaining = displayed?.window.remainingPercent;
   const displayedKind = displayed?.kind ?? null;
   const tier = visualTier(remaining);
   const language = settings.language;
   const t = copy[language];
   const activity = snapshot?.isCached || refreshFailed || !displayed ? "unknown" : snapshot?.consumptionState ?? "unknown";
-  const displayedLabel = displayedKind === "weekly" ? t.weekly : displayedKind === "fiveHour" ? t.fiveHour : t.unavailable;
+  const displayedLabel = displayed ? quotaLabel(displayed, language) : t.unavailable;
 
   const resizeNative = useCallback(async (nextExpanded: boolean) => {
     try {
@@ -447,7 +441,7 @@ export default function App() {
     );
   }
 
-  const weekly = snapshot?.authenticated ? snapshot.weekly.remainingPercent : null;
+  const secondaryRemaining = secondary?.window.remainingPercent;
   const credits = snapshot?.authenticated ? snapshot.availableResets : null;
   const resetCredits = snapshot?.authenticated ? snapshot.resetCredits : null;
   const plan = snapshot?.authenticated ? snapshot.plan : null;
@@ -490,24 +484,30 @@ export default function App() {
         </div>
         {tier !== "unknown" && <span className="health-label">{t[tier]}</span>}
       </div>
-      <p className={`reset-time ${displayedKind === "weekly" ? "quota-policy-note" : ""}`}>
+      <p className="reset-time">
         {topFailed ? t.topFailed : refreshFailed ? t.refreshFailed : snapshot?.authenticated === false ? t.signIn
           : !snapshot && refreshing ? t.loading : displayed ? resetLabel(displayed.window.resetsAt, language, now) : t.quotaUnavailableNotice}
-        {displayedKind === "weekly" && !refreshFailed && <span className="window-note">{t.shortWindowUnavailable}</span>}
       </p>
 
       <footer className="card-footer">
-        {displayedKind === "weekly" ? (
-          <div className="weekly-metric fallback-metric" title={t.quotaPolicyNotice}>
-            <p>{t.shortWindow}</p>
-            <strong>{t.unavailable}</strong>
+        {secondary ? (
+          <div className="weekly-metric">
+            <p>{quotaLabel(secondary, language)}</p>
+            <div className="weekly-value">
+              <strong>{percent(secondaryRemaining)}<small>%</small></strong>
+              {secondary.window.resetsAt && <span className="metric-date" title={resetLabel(secondary.window.resetsAt, language, now)}>{t.until} {weeklyDate(secondary.window.resetsAt, language)}</span>}
+            </div>
           </div>
         ) : (
           <div className="weekly-metric">
-            <p>{t.weekly}</p>
-            <div className="weekly-value">
-              <strong>{percent(weekly)}{weekly !== null && weekly !== undefined && <small>%</small>}</strong>
-              {snapshot?.authenticated && snapshot.weekly.resetsAt && <span className="metric-date" title={resetLabel(snapshot.weekly.resetsAt, language, now)}>{t.until} {weeklyDate(snapshot.weekly.resetsAt, language)}</span>}
+            <p>{t.nextReset}</p>
+            <div className="reset-date">
+              {displayed?.window.resetsAt && Number.isFinite(Date.parse(displayed.window.resetsAt)) ? <>
+                <strong>{weeklyDate(displayed.window.resetsAt, language)}</strong>
+                <span className="metric-date">{new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
+                  hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+                }).format(new Date(displayed.window.resetsAt))}</span>
+              </> : <span className="metric-date">{t.resetUnknown}</span>}
             </div>
           </div>
         )}

@@ -41,13 +41,17 @@ The runtime has just three frontend dependencies (React, React DOM and the Tauri
 
 ## Quota-window availability
 
-Codex quota policy and the windows returned by `account/rateLimits/read` can vary by plan, workspace, promotion, and rollout. Some accounts may temporarily receive no traditional 5-hour window. Codex Quota Dot treats this as an unavailable window rather than a service failure:
+Codex Quota Dot is not restricted to Plus: it reads the actual quota windows returned for the signed-in account, including Pro. Their presence and duration can vary by plan, workspace, promotion, and rollout.
 
-- when a short-period window is available, it remains the primary display;
-- when the short-period window is absent but a weekly window exists, the orb automatically displays the weekly value with a `周` / `W` marker;
-- when neither window is returned, the app uses a neutral unavailable state and keeps cached data clearly identified.
+- With multiple usable windows, the shortest reported period is the main display and the other appears in the footer. Labels follow the reported duration rather than assuming five hours.
+- With only a weekly window, the orb displays the weekly value with a `周` / `W` marker. The card shows the weekly percentage, countdown, and local reset date/time; it does not show a misleading missing-five-hour warning.
+- Other reported durations are supported too. A window without a duration is labeled simply “Quota remaining”.
+- With no usable percentage, the app stays neutral and shows unavailable data. Missing windows are **not** interpreted as unlimited usage, 100% remaining, or a failed login.
+- Older cached snapshots remain readable and are clearly marked as saved data.
 
-This project does not claim that OpenAI has permanently or universally removed a specific quota window.
+中文说明：Plus、Pro 等套餐统一按实际返回的额度周期显示。没有五小时窗口但有周额度时，正常展示周额度和重置时间；没有返回数据不等于无限额度。
+
+This project does not claim that OpenAI has permanently or universally removed a specific quota window. See [official pricing and usage guidance](https://learn.chatgpt.com/docs/pricing). Pro weekly-only behavior is covered by synthetic API fixtures and browser checks; a live Pro account has not been used for validation.
 
 ## Privacy design
 
