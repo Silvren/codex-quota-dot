@@ -1,6 +1,14 @@
 # Codex Quota Dot
 
-A lightweight, privacy-first desktop indicator for viewing Codex quota windows without opening a usage page.
+**Keep your Codex quota in sight, not another browser tab.**
+
+A lightweight, privacy-first **Codex CLI and Codex Desktop quota widget for Windows and macOS**. See remaining usage, weekly limits and reset times in a small floating orb.
+
+[简体中文](README.zh-CN.md) · [Download](https://github.com/Silvren/codex-quota-dot/releases/latest) · [Report a bug](https://github.com/Silvren/codex-quota-dot/issues/new/choose)
+
+[![Latest release](https://img.shields.io/github/v/release/Silvren/codex-quota-dot)](https://github.com/Silvren/codex-quota-dot/releases/latest)
+[![CI](https://github.com/Silvren/codex-quota-dot/actions/workflows/ci.yml/badge.svg)](https://github.com/Silvren/codex-quota-dot/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 > This is an independent open-source project and is not affiliated with or endorsed by OpenAI.
 
@@ -8,7 +16,7 @@ A lightweight, privacy-first desktop indicator for viewing Codex quota windows w
 
 ## Interface preview
 
-![Codex Quota Dot v0.2.2: compact cards and quota orbs in three health states](assets/codex-quota-dot-ui.jpg)
+![Codex Quota Dot: compact quota cards and floating orbs in three health states](assets/codex-quota-dot-ui.jpg)
 
 The surface changes with the active quota window: blue for healthy (`50–100%`), amber for caution (`10–50%`), and coral for critical (`0–10%`). If Codex omits the short window, the orb falls back to weekly quota and displays a `周` / `W` marker.
 
@@ -24,7 +32,15 @@ Download the latest build from [GitHub Releases](https://github.com/Silvren/code
 
 ## Current status
 
-`v0.2.2` refines the compact interface and fixes reset-credit expiration details, cached/error states, and quota-bucket selection. Windows builds and the live read-only Codex data path are verified locally. The latest visual pass was checked in a browser; native multi-monitor/DPI behavior and macOS interaction still need hands-on checks.
+`v0.2.3` adapts to the quota periods Codex actually returns, including weekly-only accounts. It retains the compact interface, reset-credit expiration details, and explicit cached/error states. Windows x64 and both macOS architectures have passing release builds.
+
+### Start in three steps
+
+1. Install Codex Desktop or Codex CLI and sign in there. This widget does not ask for your credentials.
+2. Download the package for your OS from [Releases](https://github.com/Silvren/codex-quota-dot/releases/latest). Windows users can choose the installer or extract the portable ZIP; macOS users should choose Apple Silicon or Intel.
+3. Launch Codex Quota Dot. **Drag to move, click to expand, Esc to collapse.** Hover does not open the card.
+
+For CLI-only setups, `codex` must be available on PATH, or set `CODEX_BINARY` to its executable before starting the widget. If both Desktop and CLI are installed, the widget prefers the Desktop binary unless `CODEX_BINARY` is set. Quota availability depends on the account and the installed Codex version.
 
 ### What it shows
 
@@ -99,7 +115,7 @@ npm run tauri build
 
 - Rust/native build verification is required on every target OS; WebView behavior differs across Windows and macOS.
 - Each refresh currently starts a short-lived app-server subprocess. A future release may reuse the supported local daemon transport after lifecycle behavior is validated.
-- Native behavior still needs a hands-on pass on each supported macOS architecture before public release.
+- Passing macOS builds do not cover every native interaction, multi-monitor layout, or DPI setting.
 - Start-at-login and a full settings screen are intentionally not included; the widget keeps controls limited to language, always-on-top, reset-credit details, and refresh.
 - `consuming` is inferred from a decrease between snapshots. It does not mean a Codex task is definitely running.
 - The provider depends on the installed Codex version exposing the documented app-server account methods. Structural changes fail closed as `Unknown`.
