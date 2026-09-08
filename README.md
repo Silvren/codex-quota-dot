@@ -16,7 +16,7 @@ A lightweight, privacy-first **Codex CLI and Codex Desktop quota widget for Wind
 
 ## Interface preview
 
-![Codex Quota Dot: compact quota cards and floating orbs in three health states](assets/codex-quota-dot-ui.jpg)
+![Codex Quota Dot v0.2.3: Plus and Pro quota cards with three colored quota orbs](assets/codex-quota-dot-ui.jpg)
 
 The surface changes with the active quota window: blue for healthy (`50–100%`), amber for caution (`10–50%`), and coral for critical (`0–10%`). If Codex omits the short window, the orb falls back to weekly quota and displays a `周` / `W` marker.
 

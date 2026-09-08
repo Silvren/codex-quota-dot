@@ -8,7 +8,7 @@
 
 > 独立开源项目，与 OpenAI 无隶属关系，也未获其背书。
 
-![Codex Quota Dot：额度卡片和悬浮球的三种状态](assets/codex-quota-dot-ui.jpg)
+![Codex Quota Dot v0.2.3：Plus、Pro 额度卡片与三色悬浮球](assets/codex-quota-dot-ui.jpg)
 
 ## 它解决什么问题？
 

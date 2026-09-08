@@ -1,5 +1,7 @@
 # Codex Quota Dot v0.2.3
 
+![Codex Quota Dot v0.2.3](https://raw.githubusercontent.com/Silvren/codex-quota-dot/main/assets/codex-quota-dot-ui.jpg)
+
 不是每个账号都同时有五小时和周额度。这次让小球按账号实际返回的数据来显示，不再把单周额度看成缺了一块。
 
 - Pro、Plus 等套餐统一按实际周期显示，不限定套餐名称，也不再只识别固定五小时。
