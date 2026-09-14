@@ -13,6 +13,11 @@ export interface ResetCredit {
   expiresAt: string | null;
 }
 
+export interface CreditBalance {
+  amount: number | null;
+  unlimited: boolean;
+}
+
 export interface CodexUsageSnapshot {
   schemaVersion: 1;
   providerId: string;
@@ -20,6 +25,7 @@ export interface CodexUsageSnapshot {
   fiveHour: QuotaWindow;
   weekly: QuotaWindow;
   windows?: QuotaWindow[]; // Optional only for pre-adaptive cached snapshots.
+  creditBalance?: CreditBalance | null;
   availableResets: number | null;
   resetCredits?: ResetCredit[] | null;
   consumptionState: ConsumptionState;

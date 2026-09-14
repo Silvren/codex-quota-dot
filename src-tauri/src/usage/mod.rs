@@ -33,6 +33,13 @@ pub struct ResetCredit {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct CreditBalance {
+    amount: Option<f64>,
+    unlimited: bool,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CodexUsageSnapshot {
     schema_version: u8,
     provider_id: &'static str,
@@ -40,6 +47,7 @@ pub struct CodexUsageSnapshot {
     five_hour: QuotaWindow,
     weekly: QuotaWindow,
     windows: Vec<QuotaWindow>,
+    credit_balance: Option<CreditBalance>,
     available_resets: Option<u64>,
     reset_credits: Option<Vec<ResetCredit>>,
     consumption_state: &'static str,
@@ -123,6 +131,25 @@ fn rate_limit_snapshot(value: &Value) -> Option<&Value> {
         .or_else(|| value.get("rateLimits").filter(|bucket| bucket.is_object()))
 }
 
+fn parse_credit_balance(value: &Value) -> Option<CreditBalance> {
+    let credits = rate_limit_snapshot(value)?.get("credits")?;
+    if !credits.is_object() {
+        return None;
+    }
+    let amount = credits
+        .get("balance")
+        .and_then(|balance| {
+            balance
+                .as_f64()
+                .or_else(|| balance.as_str()?.trim().parse::<f64>().ok())
+        })
+        .filter(|amount| amount.is_finite() && *amount >= 0.0);
+    Some(CreditBalance {
+        amount,
+        unlimited: credits.get("unlimited").and_then(Value::as_bool) == Some(true),
+    })
+}
+
 fn parse_reset_credits(value: &Value) -> Option<Vec<ResetCredit>> {
     value
         .get("rateLimitResetCredits")?
@@ -160,6 +187,7 @@ pub fn fetch_usage() -> Result<CodexUsageSnapshot, UsageError> {
             five_hour: unknown_window(),
             weekly: unknown_window(),
             windows: Vec::new(),
+            credit_balance: None,
             available_resets: None,
             reset_credits: None,
             consumption_state: "unknown",
@@ -191,6 +219,7 @@ pub fn fetch_usage() -> Result<CodexUsageSnapshot, UsageError> {
         five_hour,
         weekly,
         windows: parse_windows(&response.rate_limits),
+        credit_balance: parse_credit_balance(&response.rate_limits),
         available_resets,
         reset_credits: parse_reset_credits(&response.rate_limits),
         consumption_state: "unknown",
@@ -207,6 +236,56 @@ pub fn fetch_usage() -> Result<CodexUsageSnapshot, UsageError> {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    #[test]
+    fn parses_credit_balance_without_currency_conversion() {
+        for balance in [json!("298.8615990000"), json!(298.861599)] {
+            let value = json!({"rateLimits":{"credits":{"balance":balance,"hasCredits":true,"unlimited":false}}});
+            let parsed = parse_credit_balance(&value).unwrap();
+            assert_eq!(parsed.amount, Some(298.861599));
+            assert!(!parsed.unlimited);
+        }
+    }
+
+    #[test]
+    fn zero_missing_and_unlimited_balances_are_distinct() {
+        let zero = json!({"rateLimits":{"credits":{"balance":"0","hasCredits":false}}});
+        assert_eq!(parse_credit_balance(&zero).unwrap().amount, Some(0.0));
+        assert!(parse_credit_balance(&json!({"rateLimits":{"credits":null}})).is_none());
+        let unlimited = json!({"rateLimits":{"credits":{"balance":null,"unlimited":true}}});
+        let parsed = parse_credit_balance(&unlimited).unwrap();
+        assert!(parsed.unlimited);
+        assert_eq!(parsed.amount, None);
+    }
+
+    #[test]
+    fn rejects_invalid_balances_and_does_not_mix_buckets() {
+        for balance in [
+            json!(""),
+            json!("NaN"),
+            json!("inf"),
+            json!("-1"),
+            json!("USD 12"),
+            json!(true),
+        ] {
+            let value = json!({"rateLimits":{"credits":{"balance":balance}}});
+            assert_eq!(parse_credit_balance(&value).unwrap().amount, None);
+        }
+        let value = json!({"rateLimits":{"credits":{"balance":"100"}},
+            "rateLimitsByLimitId":{"codex":{"primary":null}}});
+        assert!(parse_credit_balance(&value).is_none());
+    }
+
+    #[test]
+    #[ignore = "Read-only: requires a signed-in local Codex account with a finite credit balance"]
+    fn live_credit_balance_reaches_snapshot() {
+        let snapshot = fetch_usage().expect("read account usage");
+        let balance = snapshot.credit_balance.expect("credit balance returned");
+        assert!(balance
+            .amount
+            .is_some_and(|amount| amount.is_finite() && amount >= 0.0));
+        println!("Credit balance parsed successfully; no raw account data logged");
+    }
 
     #[test]
     fn preserves_weekly_only_pro_snapshot() {

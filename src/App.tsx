@@ -4,7 +4,7 @@ import { currentMonitor, getCurrentWindow, LogicalSize, PhysicalPosition } from 
 import "./App.css";
 import { fetchUsage } from "./providers/usageProvider";
 import type { CodexUsageSnapshot } from "./types/usage";
-import { availableWindows, inferConsumption, normalizeSnapshot, quotaLabel } from "./utils/usage";
+import { availableWindows, formatCreditBalance, inferConsumption, normalizeSnapshot, quotaLabel } from "./utils/usage";
 
 const COLLAPSED = { width: 64, height: 64 } as const;
 const EXPANDED = { width: 320, height: 256 } as const;
@@ -37,6 +37,8 @@ const copy = {
     noCredits: "当前没有可用的重置机会。",
     creditPartial: "部分机会未提供到期时间。",
     resetOpportunity: "重置机会",
+    creditBalance: "额度余额",
+    balanceHint: "接口返回的 credits 点数，不是美元金额；与周期限额和重置机会分开计算。",
     consuming: "消耗中",
     idle: "空闲中",
     unknown: "监测中",
@@ -72,6 +74,8 @@ const copy = {
     noCredits: "No reset credits available.",
     creditPartial: "Some credit expiration times are unavailable.",
     resetOpportunity: "Reset credits",
+    creditBalance: "Credit balance",
+    balanceHint: "Credits reported by Codex, not USD. Separate from quota windows and reset credits.",
     consuming: "Consuming",
     idle: "Idle",
     unknown: "Monitoring",
@@ -488,6 +492,11 @@ export default function App() {
         {topFailed ? t.topFailed : refreshFailed ? t.refreshFailed : snapshot?.authenticated === false ? t.signIn
           : !snapshot && refreshing ? t.loading : displayed ? resetLabel(displayed.window.resetsAt, language, now) : t.quotaUnavailableNotice}
       </p>
+
+      <div className="balance-row" title={t.balanceHint}>
+        <span>{t.creditBalance}{snapshot?.isCached && <small> · {t.cached}</small>}</span>
+        <strong>{formatCreditBalance(snapshot?.authenticated ? snapshot.creditBalance : null, language)}</strong>
+      </div>
 
       <footer className="card-footer">
         {secondary ? (

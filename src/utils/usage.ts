@@ -1,4 +1,4 @@
-import type { CodexUsageSnapshot, HealthState, QuotaWindow, ResetCredit } from "../types/usage";
+import type { CodexUsageSnapshot, CreditBalance, HealthState, QuotaWindow, ResetCredit } from "../types/usage";
 
 export type DisplayedQuotaWindow = {
   kind: "fiveHour" | "weekly" | "custom";
@@ -29,9 +29,29 @@ export function normalizeSnapshot(value: CodexUsageSnapshot, warning = 50, criti
       ? value.windows.filter((window) => window !== null && typeof window === "object")
         .map((window) => normalizeWindow(window, warning, critical))
       : undefined,
+    creditBalance: normalizeCreditBalance(value.creditBalance),
     resetCredits: normalizeResetCredits(value.resetCredits),
     warnings: Array.isArray(value.warnings) ? value.warnings : [],
   };
+}
+
+export function normalizeCreditBalance(value: CreditBalance | null | undefined): CreditBalance | null {
+  if (!value || typeof value !== "object") return null;
+  return {
+    amount: typeof value.amount === "number" && Number.isFinite(value.amount) && value.amount >= 0 ? value.amount : null,
+    unlimited: value.unlimited === true,
+  };
+}
+
+export function formatCreditBalance(value: CreditBalance | null | undefined, language: "zh" | "en"): string {
+  const balance = normalizeCreditBalance(value);
+  if (balance?.unlimited) return language === "zh" ? "不限额" : "Unlimited";
+  if (balance?.amount == null) return "—";
+  if (balance.amount > 0 && balance.amount < 0.01) return "<0.01 credits";
+  return new Intl.NumberFormat(language === "zh" ? "zh-CN" : "en-US", {
+    maximumFractionDigits: 2,
+    notation: balance.amount >= 1_000_000 ? "compact" : "standard",
+  }).format(balance.amount) + " credits";
 }
 
 export function normalizeResetCredits(value: unknown): ResetCredit[] | null {

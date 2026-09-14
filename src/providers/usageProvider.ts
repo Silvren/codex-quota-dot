@@ -5,6 +5,7 @@ const mock: CodexUsageSnapshot = {
   schemaVersion: 1, providerId: "mock", plan: "Plus", authenticated: true,
   fiveHour: { remainingPercent: 36, usedPercent: 64, resetsAt: new Date(Date.now() + 2.98 * 3_600_000).toISOString(), resetDurationSeconds: 18_000, health: "warning" },
   weekly: { remainingPercent: 58, usedPercent: 42, resetsAt: new Date(Date.now() + 3.4 * 86_400_000).toISOString(), resetDurationSeconds: 604_800, health: "healthy" },
+  creditBalance: { amount: 298.86, unlimited: false },
   availableResets: 1, consumptionState: "consuming", fetchedAt: new Date().toISOString(), lastSuccessfulFetchAt: new Date().toISOString(), isCached: false,
   resetCredits: [{ expiresAt: new Date(Date.now() + 7 * 86_400_000).toISOString() }],
   sourceDescription: "Mock data for browser development only", warnings: ["Browser preview uses mock data. Native builds query Codex app-server."],
@@ -34,6 +35,9 @@ export async function fetchUsage(): Promise<CodexUsageSnapshot> {
     }
     return {
       ...mock,
+      creditBalance: params.get("balance") === "missing" ? null
+        : params.get("balance") === "unlimited" ? { amount: null, unlimited: true }
+        : params.has("balance") ? { amount: Number(params.get("balance")), unlimited: false } : mock.creditBalance,
       plan: params.get("plan") === "pro" ? "Pro" : mock.plan,
       windows,
       fiveHour,

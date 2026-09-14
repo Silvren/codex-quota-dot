@@ -34,6 +34,10 @@ Download the latest build from [GitHub Releases](https://github.com/Silvren/code
 
 `v0.2.3` adapts to the quota periods Codex actually returns, including weekly-only accounts. It retains the compact interface, reset-credit expiration details, and explicit cached/error states. Windows x64 and both macOS architectures have passing release builds.
 
+### Development preview: credit balance
+
+The unreleased `v0.2.4` displays the balance returned by Codex in the expanded card, using the existing refresh flow and window size. Values are **credits, not USD**: the Settings currency amount requires additional pricing metadata and is not converted here. Missing balances display `—`, not zero. This feature is not yet available in Releases.
+
 ### Start in three steps
 
 1. Install Codex Desktop or Codex CLI and sign in there. This widget does not ask for your credentials.

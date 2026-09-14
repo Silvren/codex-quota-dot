@@ -68,7 +68,7 @@ button { color: inherit; font: inherit; -webkit-tap-highlight-color: transparent
 .health-label { margin-left: auto; flex-shrink: 0; white-space: nowrap; color: var(--accent-ink); font-size: 11px; font-weight: 550; line-height: 16px; }
 .progress-track { flex: 1; min-width: 0; max-width: 232px; height: 7px; border-radius: 999px; background: var(--track); overflow: hidden; }
 .progress-track > span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--accent), var(--accent-end)); transition: width 300ms ease; }
-.reset-time { margin: 4px 0 0; min-height: 32px; color: #6a7482; font-size: 11px; line-height: 16px; }
+.reset-time { margin: 4px 0 0; min-height: 16px; color: #6a7482; font-size: 11px; line-height: 16px; }
 .card-footer { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) 28px; align-items: start; gap: 8px; flex-shrink: 0; margin-top: auto; padding-top: 8px; border-top: 1px solid #dce1e980; }
 .weekly-metric, .credit-metric { min-width: 0; }
 .weekly-metric p, .credit-metric > p { margin: 0; color: #727d8b; font-size: 11px; font-weight: 500; line-height: 16px; white-space: nowrap; }
@@ -116,3 +116,7 @@ button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+.balance-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 22px; flex-shrink: 0; color: #727d8b; font-size: 10px; line-height: 16px; }
+.balance-row strong { font-size: 11px; color: #46566c; font-weight: 550; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.balance-row small { font-size: 9px; }

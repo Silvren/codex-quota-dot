@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { availableWindows, quotaLabel, healthForRemaining, inferConsumption, normalizeSnapshot, normalizeResetCredits } from "./usage";
+import { formatCreditBalance, normalizeCreditBalance, availableWindows, quotaLabel, healthForRemaining, inferConsumption, normalizeSnapshot, normalizeResetCredits } from "./usage";
 import type { CodexUsageSnapshot } from "../types/usage";
 
 const snapshot = (remaining: number): CodexUsageSnapshot => ({
@@ -150,5 +150,27 @@ describe("adaptive quota windows", () => {
   it("does not report old five-hour consumption when the next snapshot is weekly-only", () => {
     expect(inferConsumption({ ...snapshot(70), windows: [window(300, 70), window(10080, 69)] },
       { ...snapshot(60), windows: [window(10080, 69)] })).toBe("idle");
+  });
+});
+
+describe("credit balance", () => {
+  it("supports old cached snapshots", () => expect(normalizeSnapshot(snapshot(80)).creditBalance).toBeNull());
+  it.each([NaN, Infinity, -1])("rejects invalid balance %s", (amount) => {
+    expect(normalizeCreditBalance({ amount, unlimited: false })?.amount).toBeNull();
+  });
+  it("does not confuse credits with dollars or reset credits", () => {
+    expect(formatCreditBalance({ amount: 298.861599, unlimited: false }, "zh")).toBe("298.86 credits");
+    expect(formatCreditBalance({ amount: 0, unlimited: false }, "en")).toBe("0 credits");
+  });
+  it("distinguishes missing from unlimited", () => {
+    expect(formatCreditBalance(null, "zh")).toBe("—");
+    expect(formatCreditBalance({ amount: null, unlimited: true }, "zh")).toBe("不限额");
+    expect(formatCreditBalance({ amount: null, unlimited: true }, "en")).toBe("Unlimited");
+  });
+  it("keeps large balances compact", () => {
+    expect(formatCreditBalance({ amount: 123456789, unlimited: false }, "en")).toBe("123.46M credits");
+  });
+  it("does not round a positive tiny balance down to zero", () => {
+    expect(formatCreditBalance({ amount: 0.001, unlimited: false }, "en")).toBe("<0.01 credits");
   });
 });
