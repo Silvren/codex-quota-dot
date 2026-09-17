@@ -16,7 +16,7 @@ A lightweight, privacy-first **Codex CLI and Codex Desktop quota widget for Wind
 
 ## Interface preview
 
-![Codex Quota Dot v0.2.3: Plus and Pro quota cards with three colored quota orbs](assets/codex-quota-dot-ui.jpg)
+![Codex Quota Dot v0.2.4: Plus and Pro quota cards with three colored quota orbs](assets/codex-quota-dot-ui.jpg)
 
 The surface changes with the active quota window: blue for healthy (`50–100%`), amber for caution (`10–50%`), and coral for critical (`0–10%`). If Codex omits the short window, the orb falls back to weekly quota and displays a `周` / `W` marker.
 
@@ -32,11 +32,11 @@ Download the latest build from [GitHub Releases](https://github.com/Silvren/code
 
 ## Current status
 
-`v0.2.3` adapts to the quota periods Codex actually returns, including weekly-only accounts. It retains the compact interface, reset-credit expiration details, and explicit cached/error states. Windows x64 and both macOS architectures have passing release builds.
+`v0.2.4` adapts to the quota periods Codex actually returns, including weekly-only accounts. It retains the compact interface, reset-credit expiration details, and explicit cached/error states. Release packages target Windows x64 and both macOS architectures.
 
-### Development preview: credit balance
+### Credit balance
 
-The unreleased `v0.2.4` displays the balance returned by Codex in the expanded card, using the existing refresh flow and window size. Values are **credits, not USD**: the Settings currency amount requires additional pricing metadata and is not converted here. Missing balances display `—`, not zero. This feature is not yet available in Releases.
+`v0.2.4` displays the balance returned by Codex in the expanded card, using the existing refresh flow and window size. Values are **credits, not USD**: the Settings currency amount requires additional pricing metadata and is not converted here. Missing balances display `—`, not zero. See the v0.2.4 release assets for downloads.
 
 ### Start in three steps
 

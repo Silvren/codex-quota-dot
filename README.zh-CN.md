@@ -8,7 +8,7 @@
 
 > 独立开源项目，与 OpenAI 无隶属关系，也未获其背书。
 
-![Codex Quota Dot v0.2.3：Plus、Pro 额度卡片与三色悬浮球](assets/codex-quota-dot-ui.jpg)
+![Codex Quota Dot v0.2.4：Plus、Pro 额度卡片与三色悬浮球](assets/codex-quota-dot-ui.jpg)
 
 ## 它解决什么问题？
 
@@ -24,7 +24,7 @@
 
 ## 下载和使用
 
-从 [GitHub Releases 下载 v0.2.3 或更新版本](https://github.com/Silvren/codex-quota-dot/releases/latest)：
+从 [GitHub Releases 下载 v0.2.4 或更新版本](https://github.com/Silvren/codex-quota-dot/releases/latest)：
 
 | 你的系统 | 选择的文件 |
 | --- | --- |
@@ -40,9 +40,9 @@
 
 当前安装包未签名。请只从本仓库 Releases 下载，并核对旁边的 SHA-256 文件；不要为运行软件关闭安全防护。参见 [Windows 下载验证说明](docs/windows-download-safety.md)。
 
-## 开发版新增：额度余额
+## 新增：额度余额
 
-`v0.2.4` 开发版在展开卡片中显示 Codex 返回的余额，随配额一起刷新，不增加窗口尺寸。当前单位为 **credits 点数**，不是美元；设置页的货币余额需要额外的价格配置，暂不换算。缺失数据显示 `—`，不会当作零余额。此功能尚未发布到 Releases。
+`v0.2.4`在展开卡片中显示 Codex 返回的余额，随配额一起刷新，不增加窗口尺寸。当前单位为 **credits 点数**，不是美元；设置页的货币余额需要额外的价格配置，暂不换算。缺失数据显示 `—`，不会当作零余额。下载请查看 Releases 中对应版本的附件。
 
 ## 额度为什么有时不显示？
 

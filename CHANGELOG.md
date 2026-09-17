@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.4] - 2026-09-17
+
+- Added credit balance to the compact card, using the existing Codex app-server response and refresh flow.
+- Label balances in credits, not currency; preserve zero, missing, unlimited and cached states.
+- Kept the 320 × 256 card and existing dependencies; refreshed the interface showcase.
+
+## [0.2.3] - 2026-09-07
+
+- Adapted quota display to actual returned periods, including weekly-only and custom-duration windows.
+- Kept absent data distinct from unlimited quota and retained old-cache compatibility.
+
 ## [0.2.2] - 2026-09-06
 
 ### Changed
