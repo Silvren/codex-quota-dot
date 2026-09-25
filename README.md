@@ -1,8 +1,8 @@
 # Codex Quota Dot
 
-**Keep your Codex quota in sight, not another browser tab.**
+**Your Codex quota, at a glance.**
 
-A lightweight, privacy-first **Codex CLI and Codex Desktop quota widget for Windows and macOS**. See remaining usage, weekly limits and reset times in a small floating orb.
+Codex Quota Dot is a small floating desktop widget for **Codex CLI and Codex Desktop on Windows and macOS**. It shows the quota windows your account actually reports, including remaining usage and reset times, without opening a usage page or signing in again.
 
 [简体中文](README.zh-CN.md) · [Download](https://github.com/Silvren/codex-quota-dot/releases/latest) · [Report a bug](https://github.com/Silvren/codex-quota-dot/issues/new/choose)
 
@@ -12,7 +12,7 @@ A lightweight, privacy-first **Codex CLI and Codex Desktop quota widget for Wind
 
 > This is an independent open-source project and is not affiliated with or endorsed by OpenAI.
 
-中文简介：一个轻量、隐私优先的 Codex 配额桌面悬浮球，无需打开用量页面即可查看当前可用的短周期或每周额度、重置时间和消耗状态。
+中文简介：Codex 配额桌面悬浮球，一眼查看账户实际返回的剩余额度与重置时间；支持短周期和每周额度。
 
 ## Interface preview
 

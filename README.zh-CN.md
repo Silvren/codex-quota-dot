@@ -1,8 +1,8 @@
 # Codex Quota Dot
 
-**看一眼小球，就知道 Codex 还能用多少。**
+**Codex 剩余额度，抬眼就能看到。**
 
-一个给 **Codex CLI / Codex Desktop** 用户做的轻量配额悬浮窗，支持 **Windows 和 macOS**。不用反复打开用量页面，也不用把终端切走。
+Codex Quota Dot 是适用于 **Windows 和 macOS** 的桌面配额悬浮球。配合已登录的 **Codex CLI 或 Codex Desktop**，它会显示账户实际返回的剩余额度与重置时间；有短周期或每周额度，就按实际周期展示。无需反复打开用量页面，也无需在悬浮球里重新登录。
 
 [English](README.md) · [下载最新版](https://github.com/Silvren/codex-quota-dot/releases/latest) · [反馈问题](https://github.com/Silvren/codex-quota-dot/issues/new/choose)
 
