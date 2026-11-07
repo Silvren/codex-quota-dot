@@ -2,9 +2,8 @@
 
 ## [0.3.0] - 2026-11-07
 
-- Show the two available quota periods as independent arcs: the shorter period above, the longer period below, each with its own remaining percentage and health color.
-- Hover an arc to inspect its percentage and period in the orb; use the arrow keys to switch periods from the keyboard.
-- Use a single ring when Codex reports only one period, including weekly-only accounts, and keep unavailable data neutral.
+- Show the reported weekly quota as a single ring on the orb for all plans, with color based on the remaining percentage.
+- Show `—` when weekly quota data is unavailable; do not fall back to a short-period quota. Keep available short-period and weekly details in the expanded card.
 - Keep the 56 px orb, click-to-expand card, and drag-to-move interaction.
 
 ## [0.2.5] - 2026-11-07

@@ -43,7 +43,8 @@ const copy = {
     consuming: "消耗中",
     idle: "空闲中",
     unknown: "监测中",
-    openAndMove: "指向圆弧查看对应周期；点击展开，拖动调整位置",
+    openAndMove: "点击查看详情，拖动调整位置",
+    weeklyUnavailable: "暂无周额度数据",
     collapse: "收起为悬浮球",
     nextReset: "下次重置",
     quotaUnavailableNotice: "当前 Codex 未返回可用额度窗口，请稍后刷新",
@@ -79,7 +80,8 @@ const copy = {
     consuming: "Consuming",
     idle: "Idle",
     unknown: "Monitoring",
-    openAndMove: "Hover an arc to inspect its quota; click to expand, drag to reposition",
+    openAndMove: "Click for details; drag to reposition",
+    weeklyUnavailable: "Weekly quota unavailable",
     collapse: "Collapse to quota orb",
     nextReset: "Next reset",
     quotaUnavailableNotice: "Codex did not return an available quota window; try refreshing later",
@@ -409,7 +411,7 @@ export default function App() {
           language={language}
           cached={Boolean(snapshot?.isCached || refreshFailed)}
           dragging={draggingOrb}
-          unavailableText={snapshot?.authenticated === false ? t.signIn : refreshFailed ? t.refreshFailed : !snapshot && refreshing ? t.loading : t.unavailable}
+          unavailableText={snapshot?.authenticated === false ? t.signIn : refreshFailed ? t.refreshFailed : !snapshot && refreshing ? t.loading : t.weeklyUnavailable}
           instructionText={t.openAndMove}
           onPointerDown={beginOrbGesture}
           onPointerMove={moveOrbGesture}

@@ -2,7 +2,7 @@
 
 Codex Quota Dot remains maintained as a small desktop companion. Its purpose is to keep quota visible while you work in a terminal, editor, or another window. If Codex's built-in usage display is enough for you, there is no need to install it.
 
-The CLI also supports an in-terminal usage display through [`/statusline`](https://learn.chatgpt.com/docs/developer-commands?surface=cli). This widget's role is visibility on the desktop across windows. Its arcs follow reported quota periods rather than assuming a fixed set for Plus or Pro.
+The CLI also supports an in-terminal usage display through [`/statusline`](https://learn.chatgpt.com/docs/developer-commands?surface=cli). This widget's role is visibility on the desktop across windows. The orb shows the reported weekly quota for every plan; the expanded card retains available short-period and weekly details.
 
 Updates focus on:
 

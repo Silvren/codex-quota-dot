@@ -82,7 +82,7 @@
 .orb-arc-track,
 .orb-arc-value {
   fill: none;
-  stroke-width: 2.8;
+  stroke-width: 3.2;
   stroke-linecap: round;
 }
 
@@ -94,20 +94,12 @@
   stroke: var(--orb-color);
 }
 
-.orb-arc.is-selected .orb-arc-track,
-.orb-arc.is-selected .orb-arc-value {
-  stroke-width: 3.2;
-}
-
 .orb-readout {
   position: relative;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
   width: 37px;
-  margin-top: 3px;
   pointer-events: none;
 }
 
@@ -119,7 +111,7 @@
 }
 
 .orb-number strong {
-  font-size: 19px;
+  font-size: 20px;
   font-weight: 600;
   letter-spacing: -.045em;
   line-height: 1;
@@ -133,19 +125,6 @@
   font-size: 8px;
   font-weight: 500;
   color: #6b788a;
-}
-
-.orb-period {
-  display: block;
-  max-width: 35px;
-  overflow: hidden;
-  color: var(--orb-ink);
-  font-size: 7px;
-  font-weight: 600;
-  line-height: 8px;
-  text-align: center;
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
 @media (prefers-reduced-motion: reduce) {

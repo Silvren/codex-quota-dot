@@ -1,11 +1,11 @@
 # Codex Quota Dot v0.3.0
 
-小球现在能同时看两个周期了。
+小球现在以单环显示实际返回的周额度。
 
-- 上方短弧显示较短周期，下方长弧显示另一个周期；每条弧单独按剩余量显示蓝、琥珀或珊瑚色。
-- 鼠标指向哪条弧，中央数字和周期标签就切到哪一条；提示中也会显示对应的剩余额度。
-- 只有周额度时显示单环；周期完全按 Codex 返回的数据决定。
-- 保留 56 px 尺寸、点击展开、拖动移动。键盘上下键可以切换周期，Enter 或空格展开。
+- Plus、Pro 等套餐使用相同规则，小球只显示实际返回的周额度，不按套餐名切换周期。
+- 小球按周剩余比例显示颜色；周额度数据缺失时显示 `—`，不回退到短周期额度。
+- 展开卡片仍保留实际返回的短周期和周额度详情。
+- 保留 56 px 尺寸、点击展开和拖动移动；Enter 仍可展开。
 
 这版也包含 v0.2.5 的 app-server 正常退出修复和依赖更新。感谢 @derekhe 的 #7。
 
@@ -13,8 +13,8 @@ CLI 本身也能在终端状态栏显示额度，使用 `/statusline` 配置。�
 
 ## English
 
-The orb now displays two quota periods as separate arcs, with independent health colors. Hover either arc to inspect its remaining percentage and period, or use the arrow keys when the orb has keyboard focus. Accounts reporting one quota period get a single ring.
+The orb now displays the reported weekly quota as a single ring for all plans. The ring color reflects the remaining percentage; when weekly data is unavailable, it shows `—` instead of falling back to a short-period quota. The expanded card retains the available short-period and weekly details.
 
-The orb stays 56 px. Click to expand and drag to reposition work as before. This release includes the graceful app-server shutdown fix from v0.2.5.
+The orb stays 56 px. Click or press Enter to expand and drag to reposition as before. This release includes the graceful app-server shutdown fix from v0.2.5.
 
 Packages remain unsigned; SHA-256 files accompany the downloads.
