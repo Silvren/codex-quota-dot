@@ -12,7 +12,9 @@ Codex Quota Dot 是适用于 **Windows 和 macOS** 的桌面配额悬浮球。�
 
 ## 它解决什么问题？
 
-写代码时，想知道剩余额度，却不想再开一个页面。
+如果 Codex 自带的额度显示已经够用，就不用再装一个工具。这个小球留给想在终端、编辑器或其他窗口工作时，仍能抬眼看到额度的人；只用 CLI 也可以。
+
+项目继续维护，重点是跟进 Codex 兼容性、修复稳定性问题和有实际用途的小改进，不按月凑功能。账号额度以 [官方用量页面和 CLI `/status`](https://learn.chatgpt.com/docs/pricing#where-can-i-see-my-current-usage-limits) 为准。
 
 - **56 px 小球**：常驻桌面，拖动换位置，点击才展开；鼠标经过不会突然弹开。
 - **320 × 256 卡片**：查看剩余额度、重置倒计时和重置机会到期时间。
@@ -24,7 +26,7 @@ Codex Quota Dot 是适用于 **Windows 和 macOS** 的桌面配额悬浮球。�
 
 ## 下载和使用
 
-从 [GitHub Releases 下载 v0.2.4 或更新版本](https://github.com/Silvren/codex-quota-dot/releases/latest)：
+从 [GitHub Releases 下载最新版](https://github.com/Silvren/codex-quota-dot/releases/latest)：
 
 | 你的系统 | 选择的文件 |
 | --- | --- |
@@ -40,9 +42,15 @@ Codex Quota Dot 是适用于 **Windows 和 macOS** 的桌面配额悬浮球。�
 
 当前安装包未签名。请只从本仓库 Releases 下载，并核对旁边的 SHA-256 文件；不要为运行软件关闭安全防护。参见 [Windows 下载验证说明](docs/windows-download-safety.md)。
 
-## 新增：额度余额
+## v0.2.5 维护更新
 
-`v0.2.4`在展开卡片中显示 Codex 返回的余额，随配额一起刷新，不增加窗口尺寸。当前单位为 **credits 点数**，不是美元；设置页的货币余额需要额外的价格配置，暂不换算。缺失数据显示 `—`，不会当作零余额。下载请查看 Releases 中对应版本的附件。
+这次先把稳定性补上：读取额度后先关闭 app-server 输入，给它最多五秒正常退出；只有超时才强制结束。感谢 @derekhe 提交 [#7](https://github.com/Silvren/codex-quota-dot/pull/7)。同时更新开发依赖，恢复 macOS 构建检查。
+
+Windows LSASS/RPC 崩溃的后续情况继续在 [#6](https://github.com/Silvren/codex-quota-dot/issues/6) 跟进。项目的维护范围见 [维护说明](docs/maintenance.md)。
+
+## 额度余额
+
+`v0.2.4` 起，展开卡片显示 Codex 返回的余额，随配额一起刷新，不增加窗口尺寸。当前单位为 **credits 点数**，不是美元；设置页的货币余额需要额外的价格配置，暂不换算。缺失数据显示 `—`，不会当作零余额。下载请查看 Releases 中对应版本的附件。
 
 ## 额度为什么有时不显示？
 

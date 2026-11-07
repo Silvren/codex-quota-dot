@@ -19,7 +19,7 @@
 - a restrictive CSP permits packaged assets and Tauri IPC only;
 - protocol requests are constant and response fields are allow-listed during normalization;
 - subprocess stderr and JSON-RPC error bodies are not logged or returned;
-- refresh has bounded protocol timeouts and the child is killed after each attempt;
+- refresh has bounded protocol timeouts; cleanup closes stdin, allows up to five seconds for normal exit, then terminates and reaps an unresponsive child;
 - cached data is visibly labeled;
 - no remote content is rendered.
 
