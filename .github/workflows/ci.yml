@@ -36,7 +36,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2025, macos-14]
+        os: [windows-2025, macos-15]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -47,3 +47,5 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - run: npm ci
       - run: npm run tauri build -- --no-bundle
+      - name: Test app-server lifecycle with mock subprocesses
+        run: cargo test --manifest-path src-tauri/Cargo.toml --release --locked usage::app_server::tests

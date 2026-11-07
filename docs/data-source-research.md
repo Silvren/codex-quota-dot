@@ -11,7 +11,7 @@ Use the official Codex app-server stable JSON-RPC account surface:
 3. call `account/read` with `refreshToken: false`;
 4. call `account/rateLimits/read`;
 5. normalize only plan, quota windows, reset timestamps, and available reset count;
-6. terminate the short-lived child process.
+6. close stdin and wait up to five seconds for the short-lived child to exit; terminate and reap it only if it remains unresponsive.
 
 The upstream README describes app-server as the interface used to power rich Codex clients. It documents `account/read`, `account/rateLimits/read`, `usedPercent`, `windowDurationMins`, `resetsAt`, `rateLimitResetCredits.availableCount`, and the required initialization sequence:
 

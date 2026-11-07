@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.5] - 2026-11-07
+
+### Fixed
+
+- Close app-server stdin and allow up to five seconds for a normal exit after quota reads; terminate and reap only children that exceed the deadline. Cleanup also covers failed, timed-out, and signed-out requests. Thanks to @derekhe for [#7](https://github.com/Silvren/codex-quota-dot/pull/7).
+- Add six mock-subprocess regression tests for graceful exit and timeout cleanup.
+
+### Maintenance
+
+- Refresh development dependencies to resolve high-severity npm audit findings.
+- Move Apple Silicon CI and release builds to `macos-15` after the previous runner stopped accepting jobs; run the mock app-server lifecycle tests on Windows and macOS too.
+- Clarify the widget's role alongside Codex's built-in usage display and keep maintenance focused on compatibility and stability.
+- Track the Windows LSASS/RPC report in [#6](https://github.com/Silvren/codex-quota-dot/issues/6). Graceful shutdown addresses the suspected termination race; the underlying crash cause remains open.
+
 ## [0.2.4] - 2026-09-17
 
 - Added credit balance to the compact card, using the existing Codex app-server response and refresh flow.

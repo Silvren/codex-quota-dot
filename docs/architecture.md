@@ -36,4 +36,6 @@ flowchart LR
 
 The frontend fetches at startup and every 60 seconds. Failed reads keep the last sanitized snapshot and mark it cached. Activity is `consuming` only when a comparable subsequent snapshot decreases; unchanged values become `idle`; no history produces `unknown`.
 
-Future work will add jitter, exponential backoff, settings, dynamic labels from window duration, and a persistent app-server connection after daemon compatibility is proven.
+Each read uses a short-lived app-server. After the request, including error paths, the backend closes stdin and waits up to five seconds for normal exit. Only a child that does not exit in time is forcibly terminated and reaped. A request error takes precedence if cleanup also fails.
+
+A persistent app-server may reduce process churn, but needs separate lifecycle and daemon-compatibility validation. It is not part of the current fix.

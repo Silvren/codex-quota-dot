@@ -14,6 +14,12 @@ Codex Quota Dot is a small floating desktop widget for **Codex CLI and Codex Des
 
 中文简介：Codex 配额桌面悬浮球，一眼查看账户实际返回的剩余额度与重置时间；支持短周期和每周额度。
 
+## Do you still need it?
+
+If Codex's built-in usage display covers your workflow, you can skip this app. Quota Dot is for people who want a small, movable, always-on-top indicator while working in a terminal, editor, or another window. CLI-only setups are supported too.
+
+This remains a small, maintained utility. Updates focus on Codex compatibility, process stability, and useful bug fixes, with no fixed feature-release schedule. The [official usage dashboard and CLI `/status`](https://learn.chatgpt.com/docs/pricing#where-can-i-see-my-current-usage-limits) remain the reference for account limits.
+
 ## Interface preview
 
 ![Codex Quota Dot v0.2.4: Plus and Pro quota cards with three colored quota orbs](assets/codex-quota-dot-ui.jpg)
@@ -32,7 +38,9 @@ Download the latest build from [GitHub Releases](https://github.com/Silvren/code
 
 ## Current status
 
-`v0.2.4` adapts to the quota periods Codex actually returns, including weekly-only accounts. It retains the compact interface, reset-credit expiration details, and explicit cached/error states. Release packages target Windows x64 and both macOS architectures.
+`v0.2.5` is a maintenance update: quota reads now give app-server up to five seconds to exit normally, with forced termination reserved for an unresponsive child. It also refreshes development dependencies and platform build checks. Thanks to @derekhe for [#7](https://github.com/Silvren/codex-quota-dot/pull/7). Follow-up on the Windows LSASS/RPC crash remains in [#6](https://github.com/Silvren/codex-quota-dot/issues/6).
+
+The widget still adapts to the quota periods Codex returns, including weekly-only accounts, with credit balances, reset-credit details, and explicit cached/error states. See [maintenance scope](docs/maintenance.md).
 
 ### Credit balance
 
@@ -118,7 +126,7 @@ npm run tauri build
 ## Known limitations
 
 - Rust/native build verification is required on every target OS; WebView behavior differs across Windows and macOS.
-- Each refresh currently starts a short-lived app-server subprocess. A future release may reuse the supported local daemon transport after lifecycle behavior is validated.
+- Each refresh starts a short-lived app-server subprocess and closes it gracefully, with a five-second fallback deadline. A persistent connection needs separate lifecycle validation.
 - Passing macOS builds do not cover every native interaction, multi-monitor layout, or DPI setting.
 - Start-at-login and a full settings screen are intentionally not included; the widget keeps controls limited to language, always-on-top, reset-credit details, and refresh.
 - `consuming` is inferred from a decrease between snapshots. It does not mean a Codex task is definitely running.
