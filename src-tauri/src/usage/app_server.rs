@@ -3,8 +3,8 @@ use serde_json::{json, Value};
 use std::{
     env,
     ffi::OsString,
-    io::{BufRead, BufReader, Write},
-    process::{Command, Stdio},
+    io::{self, BufRead, BufReader, Write},
+    process::{Child, Command, Stdio},
     sync::mpsc::{self, Receiver},
     thread,
     time::{Duration, Instant},
@@ -92,6 +92,31 @@ fn send(stdin: &mut impl Write, value: Value) -> Result<(), UsageError> {
         .map_err(|_| UsageError("Could not communicate with Codex app-server"))
 }
 
+fn shutdown_child(child: &mut Child, timeout: Duration) -> io::Result<()> {
+    // EOF lets app-server finish outstanding work before exiting. Forced
+    // termination is only a fallback for a child that does not exit in time.
+    drop(child.stdin.take());
+    let deadline = Instant::now() + timeout;
+    loop {
+        if child.try_wait()?.is_some() {
+            return Ok(());
+        }
+        let remaining = deadline.saturating_duration_since(Instant::now());
+        if remaining.is_zero() {
+            break;
+        }
+        thread::sleep(remaining.min(Duration::from_millis(25)));
+    }
+    if let Err(error) = child.kill() {
+        // The process may have exited between the last poll and kill.
+        if child.try_wait()?.is_none() {
+            return Err(error);
+        }
+    }
+    child.wait()?;
+    Ok(())
+}
+
 pub fn read_account_usage() -> Result<AccountUsageResponse, UsageError> {
     let binary = codex_binary();
     let mut command = Command::new(binary);
@@ -108,27 +133,35 @@ pub fn read_account_usage() -> Result<AccountUsageResponse, UsageError> {
     #[cfg(target_os = "windows")]
     command.creation_flags(CREATE_NO_WINDOW);
 
+    read_account_usage_from_command(command)
+}
+
+fn read_account_usage_from_command(
+    mut command: Command,
+) -> Result<AccountUsageResponse, UsageError> {
     let mut child = command
         .spawn()
         .map_err(|_| UsageError("Codex CLI was not found or could not be started"))?;
-    let mut stdin = child
-        .stdin
-        .take()
-        .ok_or(UsageError("Codex app-server input was unavailable"))?;
-    let stdout = child
-        .stdout
-        .take()
-        .ok_or(UsageError("Codex app-server output was unavailable"))?;
-    let (sender, receiver) = mpsc::channel();
-    thread::spawn(move || {
-        for line in BufReader::new(stdout).lines().map_while(Result::ok) {
-            if let Ok(value) = serde_json::from_str::<Value>(&line) {
-                let _ = sender.send(value);
-            }
-        }
-    });
-
     let result = (|| {
+        // Keep the taken pipe inside this scope so every return path sends EOF
+        // before shutdown_child waits, including protocol and setup errors.
+        let mut stdin = child
+            .stdin
+            .take()
+            .ok_or(UsageError("Codex app-server input was unavailable"))?;
+        let stdout = child
+            .stdout
+            .take()
+            .ok_or(UsageError("Codex app-server output was unavailable"))?;
+        let (sender, receiver) = mpsc::channel();
+        thread::spawn(move || {
+            for line in BufReader::new(stdout).lines().map_while(Result::ok) {
+                if let Ok(value) = serde_json::from_str::<Value>(&line) {
+                    let _ = sender.send(value);
+                }
+            }
+        });
+
         send(
             &mut stdin,
             json!({"method":"initialize","id":1,"params":{"clientInfo":{"name":"codex_quota_dot","title":"Codex Quota Dot","version":env!("CARGO_PKG_VERSION")},"capabilities":{}}}),
@@ -156,7 +189,136 @@ pub fn read_account_usage() -> Result<AccountUsageResponse, UsageError> {
             rate_limits,
         })
     })();
-    let _ = child.kill();
-    let _ = child.wait();
-    result
+    let shutdown = shutdown_child(&mut child, Duration::from_secs(5));
+    match result {
+        Ok(response) => shutdown
+            .map(|()| response)
+            .map_err(|_| UsageError("Could not shut down Codex app-server")),
+        Err(error) => Err(error),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::{fs, time::SystemTime};
+
+    fn mock_command(mode: &str) -> (Command, std::path::PathBuf) {
+        let nonce = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let marker = env::temp_dir().join(format!(
+            "quota-dot-eof-{}-{mode}-{nonce}",
+            std::process::id()
+        ));
+        let mut command = Command::new(env::current_exe().unwrap());
+        command
+            .args([
+                "--ignored",
+                "--exact",
+                "usage::app_server::tests::mock_app_server",
+                "--nocapture",
+            ])
+            .env("QUOTA_DOT_MOCK_MODE", mode)
+            .env("QUOTA_DOT_MOCK_EOF", &marker)
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null());
+        (command, marker)
+    }
+
+    #[test]
+    #[ignore = "Subprocess fixture; never starts the real Codex CLI"]
+    fn mock_app_server() {
+        let mode = env::var("QUOTA_DOT_MOCK_MODE").expect("fixture mode");
+        for line in io::stdin().lock().lines() {
+            let request: Value = serde_json::from_str(&line.unwrap()).unwrap();
+            let Some(id) = request.get("id").and_then(Value::as_u64) else {
+                continue;
+            };
+            let response = match id {
+                1 => json!({"id":id,"result":{}}),
+                2 if mode == "timeout" => continue,
+                2 if mode == "signed-out" => json!({"id":id,"result":{"account":null}}),
+                2 => json!({"id":id,"result":{"account":{"planType":"pro"}}}),
+                3 if mode == "rejected" => json!({"id":id,"error":{"code":-1}}),
+                3 => json!({"id":id,"result":{"rateLimits":{"primary":{"usedPercent":23}}}}),
+                _ => panic!("unexpected request"),
+            };
+            send(&mut io::stdout().lock(), response).unwrap();
+        }
+        if mode == "hung" {
+            thread::sleep(Duration::from_secs(60));
+        }
+        // Delayed exit verifies that the parent waits after EOF instead of
+        // immediately killing a child that is still finishing its cleanup.
+        thread::sleep(Duration::from_millis(50));
+        fs::write(env::var_os("QUOTA_DOT_MOCK_EOF").unwrap(), "clean exit").unwrap();
+        std::process::exit(0);
+    }
+
+    #[test]
+    fn successful_refresh_allows_graceful_exit() {
+        let (command, marker) = mock_command("success");
+        let response = read_account_usage_from_command(command).unwrap();
+        assert_eq!(response.account["account"]["planType"], "pro");
+        assert_eq!(
+            response.rate_limits["rateLimits"]["primary"]["usedPercent"],
+            23
+        );
+        assert_eq!(fs::read_to_string(&marker).unwrap(), "clean exit");
+        fs::remove_file(marker).unwrap();
+    }
+
+    #[test]
+    fn signed_out_refresh_also_closes_stdin() {
+        let (command, marker) = mock_command("signed-out");
+        let response = read_account_usage_from_command(command).unwrap();
+        assert!(response.account["account"].is_null());
+        assert_eq!(response.rate_limits, json!({}));
+        assert!(marker.exists());
+        fs::remove_file(marker).unwrap();
+    }
+
+    #[test]
+    fn rejected_request_preserves_error_and_exits_gracefully() {
+        let (command, marker) = mock_command("rejected");
+        let error = read_account_usage_from_command(command).err().unwrap();
+        assert_eq!(error.0, "Codex app-server rejected the usage request");
+        assert!(marker.exists());
+        fs::remove_file(marker).unwrap();
+    }
+
+    #[test]
+    fn timed_out_request_still_exits_gracefully() {
+        let (command, marker) = mock_command("timeout");
+        let error = read_account_usage_from_command(command).err().unwrap();
+        assert_eq!(error.0, "Codex app-server timed out");
+        assert!(marker.exists());
+        fs::remove_file(marker).unwrap();
+    }
+
+    #[test]
+    fn missing_stdout_does_not_skip_child_cleanup() {
+        let (mut command, marker) = mock_command("no-stdout");
+        command.stdout(Stdio::null());
+        let error = read_account_usage_from_command(command).err().unwrap();
+        assert_eq!(error.0, "Codex app-server output was unavailable");
+        assert!(marker.exists());
+        fs::remove_file(marker).unwrap();
+    }
+
+    #[test]
+    fn unresponsive_child_is_killed_and_reaped_after_deadline() {
+        let (mut command, marker) = mock_command("hung");
+        command.stdout(Stdio::null());
+        let mut child = command.spawn().unwrap();
+        let started = Instant::now();
+        shutdown_child(&mut child, Duration::from_millis(100)).unwrap();
+        assert!(started.elapsed() >= Duration::from_millis(100));
+        assert!(started.elapsed() < Duration::from_secs(5));
+        assert!(!child.try_wait().unwrap().unwrap().success());
+        assert!(!marker.exists());
+    }
 }
