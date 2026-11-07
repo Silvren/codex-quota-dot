@@ -16,15 +16,15 @@ Codex Quota Dot is a small floating desktop widget for **Codex CLI and Codex Des
 
 ## Do you still need it?
 
-If Codex's built-in usage display covers your workflow, you can skip this app. Quota Dot is for people who want a small, movable, always-on-top indicator while working in a terminal, editor, or another window. CLI-only setups are supported too.
+If Codex's built-in usage display covers your workflow, you can skip this app. The CLI also offers an in-terminal usage display through [`/statusline`](https://learn.chatgpt.com/docs/developer-commands?surface=cli). Quota Dot is for people who want a small, movable, always-on-top indicator while working in a terminal, editor, or another window. CLI-only setups are supported too.
 
 This remains a small, maintained utility. Updates focus on Codex compatibility, process stability, and useful bug fixes, with no fixed feature-release schedule. The [official usage dashboard and CLI `/status`](https://learn.chatgpt.com/docs/pricing#where-can-i-see-my-current-usage-limits) remain the reference for account limits.
 
 ## Interface preview
 
-![Codex Quota Dot v0.2.4: Plus and Pro quota cards with three colored quota orbs](assets/codex-quota-dot-ui.jpg)
+![Codex Quota Dot v0.3.0: independent quota arcs and a weekly-only ring, using preview data](assets/codex-quota-dot-dual-orb.png)
 
-The surface changes with the active quota window: blue for healthy (`50–100%`), amber for caution (`10–50%`), and coral for critical (`0–10%`). If Codex omits the short window, the orb falls back to weekly quota and displays a `周` / `W` marker.
+With two quota periods, the upper arc shows the shorter period and the lower arc shows the other. Each arc has its own health color: blue at `50–100%`, amber at `10–<50%`, and coral below `10%`. Hover either arc to switch the center percentage and period label; the tooltip identifies that period's quota. A single reported period gets a full ring. Missing data stays neutral.
 
 ## Download
 
@@ -38,7 +38,7 @@ Download the latest build from [GitHub Releases](https://github.com/Silvren/code
 
 ## Current status
 
-`v0.2.5` is a maintenance update: quota reads now give app-server up to five seconds to exit normally, with forced termination reserved for an unresponsive child. It also refreshes development dependencies and platform build checks. Thanks to @derekhe for [#7](https://github.com/Silvren/codex-quota-dot/pull/7). Follow-up on the Windows LSASS/RPC crash remains in [#6](https://github.com/Silvren/codex-quota-dot/issues/6).
+`v0.3.0` adds independent quota arcs and hover selection while keeping the 56 px orb. It includes v0.2.5's graceful app-server shutdown fix, development dependency updates, and platform build checks. Thanks to @derekhe for [#7](https://github.com/Silvren/codex-quota-dot/pull/7). Follow-up on the Windows LSASS/RPC crash remains in [#6](https://github.com/Silvren/codex-quota-dot/issues/6).
 
 The widget still adapts to the quota periods Codex returns, including weekly-only accounts, with credit balances, reset-credit details, and explicit cached/error states. See [maintenance scope](docs/maintenance.md).
 
@@ -63,7 +63,7 @@ For CLI-only setups, `codex` must be available on PATH, or set `CODEX_BINARY` to
 - best-effort `consuming` / `idle` inference from successive quota changes
 - last-update and honest cached/unknown states
 
-The compact **56 px quota orb** stays on top and shows the active quota percentage. Drag it to reposition and snap it to a screen edge; click it to open the **320 × 256 quota card**. Hover never opens or closes the card. Use the explicit collapse control or press `Esc` to return to the orb. The card includes Chinese/English switching and a clearly indicated always-on-top toggle. Sizes are logical pixels and follow OS display scaling.
+The compact **56 px quota orb** stays on top and shows both available periods as separate arcs. Hover an arc to inspect it, or use the up/down arrow keys when the orb has keyboard focus. Drag to reposition and snap to a screen edge; click to open the **320 × 256 quota card**. Hover never opens or closes the card. Use the explicit collapse control or press `Esc` to return to the orb. The card includes Chinese/English switching and a clearly indicated always-on-top toggle. Sizes are logical pixels and follow OS display scaling.
 
 The runtime has just three frontend dependencies (React, React DOM and the Tauri API); the three control icons are inline SVG. There is no bundled browser, sync service, mobile client, telemetry, or extra server in this desktop release.
 
@@ -72,7 +72,7 @@ The runtime has just three frontend dependencies (React, React DOM and the Tauri
 Codex Quota Dot is not restricted to Plus: it reads the actual quota windows returned for the signed-in account, including Pro. Their presence and duration can vary by plan, workspace, promotion, and rollout.
 
 - With multiple usable windows, the shortest reported period is the main display and the other appears in the footer. Labels follow the reported duration rather than assuming five hours.
-- With only a weekly window, the orb displays the weekly value with a `周` / `W` marker. The card shows the weekly percentage, countdown, and local reset date/time; it does not show a misleading missing-five-hour warning.
+- With only a weekly window, the orb displays one full ring with the weekly value and period label. The card shows the weekly percentage, countdown, and local reset date/time.
 - Other reported durations are supported too. A window without a duration is labeled simply “Quota remaining”.
 - With no usable percentage, the app stays neutral and shows unavailable data. Missing windows are **not** interpreted as unlimited usage, 100% remaining, or a failed login.
 - Older cached snapshots remain readable and are clearly marked as saved data.

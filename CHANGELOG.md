@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0] - 2026-11-07
+
+- Show the two available quota periods as independent arcs: the shorter period above, the longer period below, each with its own remaining percentage and health color.
+- Hover an arc to inspect its percentage and period in the orb; use the arrow keys to switch periods from the keyboard.
+- Use a single ring when Codex reports only one period, including weekly-only accounts, and keep unavailable data neutral.
+- Keep the 56 px orb, click-to-expand card, and drag-to-move interaction.
+
 ## [0.2.5] - 2026-11-07
 
 ### Fixed

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { ChevronDown, Pin, RefreshCw } from "./Icons";
+import QuotaOrb from "./QuotaOrb";
 import { currentMonitor, getCurrentWindow, LogicalSize, PhysicalPosition } from "@tauri-apps/api/window";
 import "./App.css";
 import { fetchUsage } from "./providers/usageProvider";
@@ -42,10 +43,9 @@ const copy = {
     consuming: "消耗中",
     idle: "空闲中",
     unknown: "监测中",
-    openAndMove: "点击查看额度，拖动调整位置",
+    openAndMove: "指向圆弧查看对应周期；点击展开，拖动调整位置",
     collapse: "收起为悬浮球",
     nextReset: "下次重置",
-    weeklyMarker: "周",
     quotaUnavailableNotice: "当前 Codex 未返回可用额度窗口，请稍后刷新",
     cached: "上次数据",
     refreshFailed: "更新失败，请检查 Codex 登录后重试",
@@ -79,10 +79,9 @@ const copy = {
     consuming: "Consuming",
     idle: "Idle",
     unknown: "Monitoring",
-    openAndMove: "Click to view usage; drag to reposition",
+    openAndMove: "Hover an arc to inspect its quota; click to expand, drag to reposition",
     collapse: "Collapse to quota orb",
     nextReset: "Next reset",
-    weeklyMarker: "W",
     quotaUnavailableNotice: "Codex did not return an available quota window; try refreshing later",
     cached: "Saved data",
     refreshFailed: "Update failed. Check your Codex login and retry",
@@ -183,7 +182,6 @@ export default function App() {
   const displayed = windows[0] ?? null;
   const secondary = windows[1] ?? null;
   const remaining = displayed?.window.remainingPercent;
-  const displayedKind = displayed?.kind ?? null;
   const tier = visualTier(remaining);
   const language = settings.language;
   const t = copy[language];
@@ -405,42 +403,20 @@ export default function App() {
 
   if (!expanded) {
     return (
-      <main className="orb-shell">
-        <button
-          className={`quota-orb tier-${tier} ${draggingOrb ? "is-dragging" : ""} ${displayedKind === "weekly" ? "is-weekly" : ""}`}
-          aria-label={`${snapshot?.isCached ? `${t.cached}. ` : ""}${displayedLabel}${remaining != null ? `: ${percent(remaining)}%` : ""}. ${t.openAndMove}`}
-          title={`${snapshot?.isCached ? `${t.cached} · ` : ""}${displayedLabel}: ${percent(remaining)}${remaining != null ? "%" : ""}\n${t.openAndMove}`}
+      <main className="orb-shell" lang={language === "zh" ? "zh-CN" : "en"}>
+        <QuotaOrb
+          windows={windows}
+          language={language}
+          cached={Boolean(snapshot?.isCached || refreshFailed)}
+          dragging={draggingOrb}
+          unavailableText={snapshot?.authenticated === false ? t.signIn : refreshFailed ? t.refreshFailed : !snapshot && refreshing ? t.loading : t.unavailable}
+          instructionText={t.openAndMove}
           onPointerDown={beginOrbGesture}
           onPointerMove={moveOrbGesture}
           onPointerUp={finishOrbGesture}
           onPointerCancel={cancelOrbGesture}
-          onClick={(event) => { if (event.detail === 0) openPanel(); }}
-          onKeyDown={(event) => {
-            if (event.key !== "Enter" && event.key !== " ") return;
-            event.preventDefault();
-            openPanel();
-          }}
-          onDragStart={(event) => event.preventDefault()}
-        >
-          <svg className="orb-ring" viewBox="0 0 56 56" aria-hidden="true" focusable="false">
-            <defs>
-              <linearGradient id="orb-gradient" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="var(--accent)" />
-                <stop offset="100%" stopColor="var(--accent-end)" />
-              </linearGradient>
-            </defs>
-            <circle className="orb-ring-track" cx="28" cy="28" r="21" />
-            {remaining != null && remaining > 0 && (
-              <circle className="orb-ring-value" cx="28" cy="28" r="21" pathLength="100"
-                strokeDasharray={`${Math.max(0, Math.min(100, remaining))} 100`} transform="rotate(-90 28 28)" />
-            )}
-          </svg>
-          <span className={`orb-metric ${remaining != null && Math.round(remaining) === 100 ? "three-digits" : ""}`} aria-hidden="true">
-            <strong>{percent(remaining)}</strong>
-            {remaining !== null && remaining !== undefined && <small>%</small>}
-          </span>
-          {displayedKind === "weekly" && <span className="orb-window-tag" aria-hidden="true">{t.weeklyMarker}</span>}
-        </button>
+          onOpen={openPanel}
+        />
       </main>
     );
   }

@@ -10,7 +10,7 @@
 * { box-sizing: border-box; }
 html, body, #root { width: 100%; height: 100%; margin: 0; overflow: hidden; background: transparent; }
 button { color: inherit; font: inherit; -webkit-tap-highlight-color: transparent; }
-.quota-card, .quota-orb {
+.quota-card {
   --surface: #f0f5fc;
   --accent: #5287ce;
   --accent-end: #8badd9;
@@ -98,20 +98,6 @@ button { color: inherit; font: inherit; -webkit-tap-highlight-color: transparent
 .provider-mark:disabled { opacity: .55; cursor: wait; }
 .provider-mark.refreshing svg { animation: refresh-spin 1s linear infinite; }
 @keyframes refresh-spin { to { transform: rotate(360deg); } }
-.orb-shell { width: 64px; height: 64px; }
-.quota-orb { position: relative; display: grid; place-items: center; width: 56px; height: 56px; margin: 4px; padding: 0; border: 1px solid #cbd4e15c; border-radius: 20px; background: linear-gradient(145deg, #fff 12%, var(--surface) 100%); box-shadow: 0 1px 3px #30436513, inset 0 1px 0 #fff; color: #354256; cursor: grab; user-select: none; touch-action: none; transition: box-shadow 140ms ease, border-color 140ms ease; }
-.quota-orb:hover { border-color: var(--accent-end); box-shadow: 0 2px 5px #30436520; }
-.quota-orb:active, .quota-orb.is-dragging { cursor: grabbing; box-shadow: 0 1px 2px #30436518; }
-.orb-ring { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.orb-ring circle { fill: none; stroke-width: 2.5; }
-.orb-ring-track { stroke: var(--track); }
-.orb-ring-value { stroke: url(#orb-gradient); stroke-linecap: round; }
-.orb-metric { display: flex; align-items: baseline; gap: 1px; position: relative; font-variant-numeric: tabular-nums; }
-.orb-metric > strong { font-size: 20px; line-height: 1; font-weight: 600; letter-spacing: -.045em; }
-.orb-metric > small { font-size: 8px; font-weight: 500; color: #6b788a; }
-.orb-metric.three-digits > strong { font-size: 17px; }
-.is-weekly .orb-metric { transform: translateY(-3px); }
-.orb-window-tag { position: absolute; bottom: 10px; left: 0; right: 0; color: var(--accent-ink); font-size: 7px; font-weight: 600; line-height: 8px; text-align: center; }
 button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }

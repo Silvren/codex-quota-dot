@@ -1,0 +1,155 @@
+.orb-shell {
+  width: 64px;
+  height: 64px;
+}
+
+.quota-orb {
+  --orb-color: #5287ce;
+  --orb-track: #dce5f1;
+  --orb-ink: #416a9f;
+  --orb-surface: #f0f5fc;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin: 4px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #cbd4e178;
+  border-radius: 20px;
+  background: linear-gradient(145deg, #fff 12%, var(--orb-surface) 100%);
+  box-shadow: 0 1px 3px #30436513, inset 0 1px 0 #fff;
+  color: #354256;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  transition: box-shadow 140ms ease, border-color 140ms ease;
+}
+
+.orb-tone-healthy {
+  --orb-color: #5287ce;
+  --orb-track: #dce5f1;
+  --orb-ink: #416a9f;
+  --orb-surface: #f0f5fc;
+}
+
+.orb-tone-caution {
+  --orb-color: #c79437;
+  --orb-track: #eee5d2;
+  --orb-ink: #936b25;
+  --orb-surface: #fcf6ea;
+}
+
+.orb-tone-critical {
+  --orb-color: #c66c76;
+  --orb-track: #efdcdf;
+  --orb-ink: #a14c57;
+  --orb-surface: #fcf0f1;
+}
+
+.orb-tone-unknown {
+  --orb-color: #939da9;
+  --orb-track: #e3e7ed;
+  --orb-ink: #66717f;
+  --orb-surface: #f1f3f6;
+}
+
+.quota-orb:hover {
+  border-color: color-mix(in srgb, var(--orb-color) 48%, #fff);
+  box-shadow: 0 2px 5px #30436520;
+}
+
+.quota-orb:active,
+.quota-orb.is-dragging {
+  cursor: grabbing;
+  box-shadow: 0 1px 2px #30436518;
+}
+
+.quota-orb:focus-visible {
+  outline: 2px solid var(--orb-color);
+  outline-offset: 1px;
+}
+
+.orb-arcs {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.orb-arc-track,
+.orb-arc-value {
+  fill: none;
+  stroke-width: 2.8;
+  stroke-linecap: round;
+}
+
+.orb-arc-track {
+  stroke: var(--orb-track);
+}
+
+.orb-arc-value {
+  stroke: var(--orb-color);
+}
+
+.orb-arc.is-selected .orb-arc-track,
+.orb-arc.is-selected .orb-arc-value {
+  stroke-width: 3.2;
+}
+
+.orb-readout {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 37px;
+  margin-top: 3px;
+  pointer-events: none;
+}
+
+.orb-number {
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+  font-variant-numeric: tabular-nums;
+}
+
+.orb-number strong {
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -.045em;
+  line-height: 1;
+}
+
+.orb-number.has-three-digits strong {
+  font-size: 17px;
+}
+
+.orb-number small {
+  font-size: 8px;
+  font-weight: 500;
+  color: #6b788a;
+}
+
+.orb-period {
+  display: block;
+  max-width: 35px;
+  overflow: hidden;
+  color: var(--orb-ink);
+  font-size: 7px;
+  font-weight: 600;
+  line-height: 8px;
+  text-align: center;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quota-orb {
+    transition: none;
+  }
+}
