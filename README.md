@@ -1,6 +1,6 @@
 # Codex Quota Dot
 
-**Your Codex quota, at a glance.**
+![Codex Quota Dot — your quota, at a glance](assets/codex-quota-dot-hero.png)
 
 Codex Quota Dot is a small floating desktop widget for **Codex CLI and Codex Desktop on Windows and macOS**. It shows the quota windows your account actually reports, including remaining usage and reset times, without opening a usage page or signing in again.
 
@@ -21,8 +21,6 @@ If Codex's built-in usage display covers your workflow, you can skip this app. T
 This remains a small, maintained utility. Updates focus on Codex compatibility, process stability, and useful bug fixes, with no fixed feature-release schedule. The [official usage dashboard and CLI `/status`](https://learn.chatgpt.com/docs/pricing#where-can-i-see-my-current-usage-limits) remain the reference for account limits.
 
 ## Interface preview
-
-![Codex Quota Dot v0.3.0: weekly quota ring, using preview data](assets/codex-quota-dot-weekly-orb.png)
 
 The orb always shows the reported weekly quota as a single ring, with blue at `50–100%`, amber at `10–<50%`, and coral below `10%`. It does not fall back to a short-period quota when weekly data is unavailable; the ring shows `—`. The expanded card retains the available short-period and weekly quota details.
 
