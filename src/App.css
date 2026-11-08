@@ -1,3 +1,5 @@
+@import "./quotaPalette.css";
+
 :root {
   font-family: "Segoe UI Variable Display", "Microsoft YaHei UI", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: #27313f;
@@ -10,17 +12,6 @@
 * { box-sizing: border-box; }
 html, body, #root { width: 100%; height: 100%; margin: 0; overflow: hidden; background: transparent; }
 button { color: inherit; font: inherit; -webkit-tap-highlight-color: transparent; }
-.quota-card {
-  --surface: #f0f5fc;
-  --accent: #5287ce;
-  --accent-end: #8badd9;
-  --accent-ink: #416a9f;
-  --track: #dce5f1;
-  --focus: #5287ce;
-}
-.tier-caution { --surface: #fcf6ea; --accent: #c79437; --accent-end: #e3c178; --accent-ink: #936b25; --track: #eee5d2; }
-.tier-critical { --surface: #fcf0f1; --accent: #c66c76; --accent-end: #dfa0a7; --accent-ink: #a14c57; --track: #efdcdf; }
-.tier-unknown { --surface: #f1f3f6; --accent: #939da9; --accent-end: #bbc2cc; --accent-ink: #66717f; --track: #e3e7ed; }
 .quota-card {
   width: 320px; height: 256px; padding: 16px;
   display: flex; flex-direction: column; position: relative; overflow: hidden;
@@ -84,13 +75,13 @@ button { color: inherit; font: inherit; -webkit-tap-highlight-color: transparent
 .credit-row > button:hover, .credit-row > button[aria-expanded="true"] { background: #e5ecf6; }
 .credit-popover { position: absolute; z-index: 2; width: 232px; max-height: 174px; overflow-y: auto; right: -32px; bottom: 36px; padding: 12px 14px; color: #546070; background: #fff; border: 1px solid #dce2ea; border-radius: 11px; box-shadow: 0 6px 20px #33445e16; font-size: 11px; line-height: 17px; }
 .credit-details-heading { display: flex; justify-content: space-between; gap: 6px; color: #6a7482; font-size: 10px; }
-.credit-details-heading > span { color: #936b25; }
+.credit-details-heading > span { color: #925f12; }
 .credit-expirations { margin: 8px 0 0; padding: 0; list-style: none; }
 .credit-expirations li { display: flex; align-items: baseline; gap: 8px; padding: 5px 0; }
 .credit-expirations li + li { border-top: 1px solid #edf0f4; }
 .credit-index { color: #86909d; font-size: 10px; }
 .credit-expirations time { color: #354459; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.credit-expired { display: block; color: #a14c57; font-size: 10px; }
+.credit-expired { display: block; color: #a13949; font-size: 10px; }
 .credit-details-note { margin: 6px 0 0; color: #727d8b; font-size: 10px; }
 .provider-mark { align-self: end; display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 1px solid #dce2e980; border-radius: 8px; background: #ffffff90; color: #6b788a; cursor: pointer; transition: color 120ms ease, background 120ms ease; }
 .provider-mark svg { width: 14px; height: 14px; stroke-width: 1.7; }

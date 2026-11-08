@@ -2,6 +2,9 @@
 
 ## [0.3.0] - 2026-11-07
 
+- Collapse the expanded card when focus moves to another window or the user clicks outside it.
+- Refine the shared blue, amber and red palette and refresh the README product hero.
+
 - Show the reported weekly quota as a single ring on the orb for all plans, with color based on the remaining percentage.
 - Show `—` when weekly quota data is unavailable; do not fall back to a short-period quota. Keep available short-period and weekly details in the expanded card.
 - Keep the 56 px orb, click-to-expand card, and drag-to-move interaction.

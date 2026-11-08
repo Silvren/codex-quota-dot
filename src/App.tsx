@@ -282,6 +282,33 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (!expanded) return;
+    let disposed = false;
+    let unlisten: (() => void) | undefined;
+    const dismissOutside = (event: PointerEvent) => {
+      if (event.target instanceof Element && !event.target.closest(".quota-card")) closePanel();
+    };
+    document.addEventListener("pointerdown", dismissOutside);
+    const native = "__TAURI_INTERNALS__" in window;
+    if (native) {
+      void getCurrentWindow().onFocusChanged(({ payload: focused }) => {
+        if (!disposed && !focused) closePanel();
+      }).then((stop) => {
+        if (disposed) stop();
+        else unlisten = stop;
+      }).catch(() => {});
+    } else {
+      window.addEventListener("blur", closePanel);
+    }
+    return () => {
+      disposed = true;
+      document.removeEventListener("pointerdown", dismissOutside);
+      if (!native) window.removeEventListener("blur", closePanel);
+      unlisten?.();
+    };
+  }, [expanded, closePanel]);
+
+  useEffect(() => {
     if (!creditOpen) return;
     const dismiss = (event: PointerEvent) => {
       if (event.target instanceof Element && !event.target.closest(".credit-row")) setCreditOpen(false);

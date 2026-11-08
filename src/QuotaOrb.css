@@ -1,13 +1,11 @@
+@import "./quotaPalette.css";
+
 .orb-shell {
   width: 64px;
   height: 64px;
 }
 
 .quota-orb {
-  --orb-color: #5287ce;
-  --orb-track: #dce5f1;
-  --orb-ink: #416a9f;
-  --orb-surface: #f0f5fc;
   position: relative;
   display: grid;
   place-items: center;
@@ -18,7 +16,7 @@
   overflow: hidden;
   border: 1px solid #cbd4e178;
   border-radius: 20px;
-  background: linear-gradient(145deg, #fff 12%, var(--orb-surface) 100%);
+  background: linear-gradient(145deg, #fff 12%, var(--surface) 100%);
   box-shadow: 0 1px 3px #30436513, inset 0 1px 0 #fff;
   color: #354256;
   cursor: grab;
@@ -27,36 +25,8 @@
   transition: box-shadow 140ms ease, border-color 140ms ease;
 }
 
-.orb-tone-healthy {
-  --orb-color: #5287ce;
-  --orb-track: #dce5f1;
-  --orb-ink: #416a9f;
-  --orb-surface: #f0f5fc;
-}
-
-.orb-tone-caution {
-  --orb-color: #c79437;
-  --orb-track: #eee5d2;
-  --orb-ink: #936b25;
-  --orb-surface: #fcf6ea;
-}
-
-.orb-tone-critical {
-  --orb-color: #c66c76;
-  --orb-track: #efdcdf;
-  --orb-ink: #a14c57;
-  --orb-surface: #fcf0f1;
-}
-
-.orb-tone-unknown {
-  --orb-color: #939da9;
-  --orb-track: #e3e7ed;
-  --orb-ink: #66717f;
-  --orb-surface: #f1f3f6;
-}
-
 .quota-orb:hover {
-  border-color: color-mix(in srgb, var(--orb-color) 48%, #fff);
+  border-color: color-mix(in srgb, var(--accent) 48%, #fff);
   box-shadow: 0 2px 5px #30436520;
 }
 
@@ -67,7 +37,7 @@
 }
 
 .quota-orb:focus-visible {
-  outline: 2px solid var(--orb-color);
+  outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
 
@@ -87,11 +57,11 @@
 }
 
 .orb-arc-track {
-  stroke: var(--orb-track);
+  stroke: var(--track);
 }
 
 .orb-arc-value {
-  stroke: var(--orb-color);
+  stroke: var(--accent);
 }
 
 .orb-readout {

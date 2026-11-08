@@ -1,0 +1,11 @@
+.quota-card, .quota-orb {
+  --surface: #f4faff;
+  --accent: #4f86d9;
+  --accent-end: #94b8e9;
+  --accent-ink: #285c9e;
+  --track: #e6f4fe;
+  --focus: #4f86d9;
+}
+.tier-caution, .orb-tone-caution { --surface: #fefbe9; --accent: #d9a23b; --accent-end: #edc773; --accent-ink: #925f12; --track: #fff1cf; }
+.tier-critical, .orb-tone-critical { --surface: #fff7f7; --accent: #d76673; --accent-end: #e9a1a8; --accent-ink: #a13949; --track: #fee5e8; }
+.tier-unknown, .orb-tone-unknown { --surface: #f1f3f6; --accent: #939da9; --accent-end: #bbc2cc; --accent-ink: #66717f; --track: #e3e7ed; }

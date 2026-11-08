@@ -35,14 +35,13 @@ export default function QuotaOrb({
   const description = weekly && value !== null
     ? `${language === "zh" ? "周额度剩余" : "Weekly remaining"}: ${Math.round(value * 10) / 10}%` : unavailableText;
   const cachedLabel = cached ? (language === "zh" ? "缓存数据" : "Cached data") : "";
-  const title = [description, cachedLabel, instructionText].filter(Boolean).join("\n");
+  const accessibleLabel = [description, cachedLabel, instructionText].filter(Boolean).join("\n");
 
   return (
     <button
       type="button"
       className={`quota-orb ${colorClass(value)}${dragging ? " is-dragging" : ""}`}
-      title={title}
-      aria-label={title}
+      aria-label={accessibleLabel}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
