@@ -1,0 +1,104 @@
+@import "./quotaPalette.css";
+
+.orb-shell {
+  width: 64px;
+  height: 64px;
+}
+
+.quota-orb {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin: 4px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #cbd4e178;
+  border-radius: 20px;
+  background: linear-gradient(145deg, #fff 12%, var(--surface) 100%);
+  box-shadow: 0 1px 3px #30436513, inset 0 1px 0 #fff;
+  color: #354256;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  transition: box-shadow 140ms ease, border-color 140ms ease;
+}
+
+.quota-orb:hover {
+  border-color: color-mix(in srgb, var(--accent) 48%, #fff);
+  box-shadow: 0 2px 5px #30436520;
+}
+
+.quota-orb:active,
+.quota-orb.is-dragging {
+  cursor: grabbing;
+  box-shadow: 0 1px 2px #30436518;
+}
+
+.quota-orb:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.orb-arcs {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.orb-arc-track,
+.orb-arc-value {
+  fill: none;
+  stroke-width: 3.2;
+  stroke-linecap: round;
+}
+
+.orb-arc-track {
+  stroke: var(--track);
+}
+
+.orb-arc-value {
+  stroke: var(--accent);
+}
+
+.orb-readout {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 37px;
+  pointer-events: none;
+}
+
+.orb-number {
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+  font-variant-numeric: tabular-nums;
+}
+
+.orb-number strong {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -.045em;
+  line-height: 1;
+}
+
+.orb-number.has-three-digits strong {
+  font-size: 17px;
+}
+
+.orb-number small {
+  font-size: 8px;
+  font-weight: 500;
+  color: #6b788a;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quota-orb {
+    transition: none;
+  }
+}
